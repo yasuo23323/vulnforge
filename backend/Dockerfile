@@ -3,8 +3,14 @@
 WORKDIR /app
 
 RUN apt-get update && apt-get install -y --no-install-recommends \
-    gcc curl wget unzip docker.io-cli \
+    gcc curl wget unzip \
     && rm -rf /var/lib/apt/lists/*
+
+# Install Docker CLI binary (client only, for nuclei Docker mode)
+RUN curl -fsSL "https://download.docker.com/linux/static/stable/x86_64/docker-27.5.1.tgz" -o /tmp/docker.tgz \
+    && tar xzf /tmp/docker.tgz -C /tmp/ \
+    && mv /tmp/docker/docker /usr/local/bin/ \
+    && rm -rf /tmp/docker /tmp/docker.tgz
 
 # Install nuclei
 RUN wget -q --tries=3 --timeout=60 \
