@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+﻿import React, { useEffect, useState } from "react";
 import { Card, Table, Tag, Typography, Spin, Row, Col, Statistic, Alert } from "antd";
 import { ExperimentOutlined, CheckCircleOutlined, CloseCircleOutlined, WarningOutlined } from "@ant-design/icons";
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, PieChart, Pie, Cell } from "recharts";
@@ -153,3 +153,4 @@ const Results: React.FC = () => {
   );
 };
 export default Results;
+

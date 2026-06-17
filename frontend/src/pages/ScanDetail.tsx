@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useRef } from "react";
+﻿import React, { useEffect, useState, useRef } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { Card, Descriptions, Tag, Typography, Table, Spin, Button, Space, Divider, Progress, message } from "antd";
 import { ArrowLeftOutlined, DownloadOutlined } from "@ant-design/icons";
@@ -23,7 +23,7 @@ const ScanDetail: React.FC = () => {
     if (!id) return;
     try {
       const [scanRes, findingsRes] = await Promise.all([
-        api.getScan(id), api.listFindings({ scan_task_id: id, page_size: 200 })
+        api.getScan(id), api.listFindings({ scan_task_id: id, page_size: 100 })
       ]);
       setScan(scanRes);
       setFindings(findingsRes.items);
@@ -160,3 +160,4 @@ const ScanDetail: React.FC = () => {
   );
 };
 export default ScanDetail;
+
