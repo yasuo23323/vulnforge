@@ -53,12 +53,12 @@ ffuf_*.json
 nuclei_*.jsonl
 py.cmd
 vulnforge_env.ps1
-gen_*.py
-scan_*.py
-fix_*.py
-probe_*.py
-run_*.py
-review_*.py
+/gen_*.py
+/scan_*.py
+/fix_*.py
+/probe_*.py
+/run_*.py
+/review_*.py
 版本迭代/
 
 # Personal docs
