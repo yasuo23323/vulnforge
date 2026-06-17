@@ -1,24 +1,26 @@
 @echo off
+cls
 echo ========================================
-echo  VulnForge - Starting...
+echo   VulnForge - Setup ^& Launch
 echo ========================================
 echo.
-echo Step 1: Check .env file...
+
 if not exist .env (
-    echo   WARNING: .env not found! Copy .env.example to .env
-    echo   and set your LLM API Key.
+    copy final_version\.env.example .env
+)
+
+findstr "^OPENAI_API_KEY=sk-your-api-key-here" .env >nul
+if %errorlevel%==0 (
     echo.
-    choice /c YN /m "Continue without .env? "
-    if errorlevel 2 exit /b
+    set /p api_key=Enter your DeepSeek API Key: 
+    if defined api_key (
+        powershell -Command "(Get-Content .env) -replace 'OPENAI_API_KEY=.*', 'OPENAI_API_KEY=%api_key%' | Set-Content .env"
+        echo API Key saved!
+    )
 )
 echo.
-echo Step 2: Starting services...
-docker compose up -d
+echo Starting VulnForge...
+docker compose -f final_version/docker-compose.yml up -d
 echo.
-echo Step 3: Opening browser...
-start http://localhost:3000
-echo.
-echo VulnForge is running at http://localhost:3000
-echo Press any key to stop all services...
-pause >nul
-docker compose down
+echo Open http://localhost:3000 in your browser
+pause
