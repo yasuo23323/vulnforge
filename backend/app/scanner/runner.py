@@ -1,4 +1,4 @@
-import asyncio
+﻿import asyncio
 from datetime import datetime
 from uuid import UUID
 
@@ -25,7 +25,7 @@ async def run_scan_task(scan_id: str | UUID) -> dict:
         try:
             orch = ScannerOrchestrator()
             scan_results = await asyncio.wait_for(
-                orch.run_scanners(task.target_url, task.scanners),
+                orch.run_scanners(task.target_url, task.scanners, **(task.parameters or {})),
                 timeout=180
             )
 
@@ -64,3 +64,4 @@ async def run_scan_task(scan_id: str | UUID) -> dict:
             task.error_message = str(e)[:500]
             await session.commit()
             return {"error": str(e), "status": "failed"}
+

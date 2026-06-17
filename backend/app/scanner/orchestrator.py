@@ -54,7 +54,6 @@ class ScannerOrchestrator:
         if not cmd:
             raise ValueError(f"No command for: {scanner_name}")
 
-        # Handle ffuf: pipe wordlist via stdin to Docker container
         stdin_data = None
         stdin_pipe = None
         if scanner_name == "ffuf":
@@ -72,8 +71,11 @@ class ScannerOrchestrator:
         return parser(raw_output, target_url)
 
     def _build_command(self, scanner_name: str, target_url: str, **kwargs) -> Optional[list[str]]:
+        cookies = kwargs.get("cookies", "")
+        header = ["-H", f"Cookie: {cookies}"] if cookies else []
+        sqlmap_cookie = ["--cookie", cookies] if cookies else []
+
         if scanner_name == "nuclei":
-            # Always use Docker mode (Docker CLI is installed in the container)
             mapped = target_url
             if "127.0.0.1" in target_url or "localhost" in target_url:
                 port_map = {
@@ -87,28 +89,28 @@ class ScannerOrchestrator:
                         for prefix in ["http://127.0.0.1:", "http://localhost:"]:
                             mapped = mapped.replace(prefix + host_port, "http://" + container + ":" + container_port)
                         break
-                return ["docker", "run", "--rm", "--network", "vulnforge_default",
+                return (["docker", "run", "--rm", "--network", "vulnforge_default",
                         "projectdiscovery/nuclei", "-u", mapped, "-j", "-silent",
                         "-timeout", "10", "-retries", "2", "-severity", "critical,high,medium,low"]
+                        + header)
             else:
-                return ["docker", "run", "--rm",
+                return (["docker", "run", "--rm",
                         "projectdiscovery/nuclei", "-u", mapped, "-j", "-silent",
                         "-timeout", "10", "-retries", "2", "-severity", "critical,high,medium,low"]
+                        + header)
 
         if scanner_name == "sqlmap":
-            sqlmap_path = os.path.join(os.path.dirname(sys.executable), "sqlmap.exe")
-            if not os.path.exists(sqlmap_path):
-                sqlmap_path = "sqlmap"
-            return [sqlmap_path, "-u", target_url, "--batch",
+            return (["sqlmap", "-u", target_url, "--batch",
                     "--level", "1", "--risk", "1", "--no-cast", "--flush-session"]
+                    + sqlmap_cookie)
 
         if scanner_name == "dalfox":
-            return ["docker", "run", "--rm", "hahwul/dalfox", "url", "--url", target_url, "--silence"]
+            return (["docker", "run", "--rm", "hahwul/dalfox", "url", "--url", target_url, "--silence"]
+                    + header)
 
         if scanner_name == "ffuf":
-            # Pipe wordlist via stdin (handled by _run_scanner_subprocess)
-            return ["docker", "run", "--rm", "-i", "ffuf/ffuf",
+            return (["docker", "run", "--rm", "-i", "ffuf/ffuf",
                     "-u", f"{target_url}/FUZZ", "-w", "-", "-t", "10", "-ac", "-s"]
+                    + header)
 
         return None
-

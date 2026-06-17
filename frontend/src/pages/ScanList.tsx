@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+﻿import React, { useEffect, useState } from "react";
 import { Table, Button, Tag, Typography, Modal, Form, Input, Select, Space, message, Spin, Tooltip } from "antd";
 import { PlusOutlined, DeleteOutlined, EyeOutlined, DownloadOutlined, ReloadOutlined } from "@ant-design/icons";
 import { useNavigate } from "react-router-dom";
@@ -53,7 +53,8 @@ const ScanList: React.FC = () => {
   const handleCreate = async (values: ScanCreateRequest) => {
     setCreating(true);
     try {
-      await api.createScan({ ...values, scanners: values.scanners || ["nuclei"] });
+      const { cookies, ...scanValues } = values;
+      await api.createScan({ ...scanValues, scanners: values.scanners || ["nuclei"], parameters: cookies ? { cookies } : {} });
       message.success("Scan created");
       setModalOpen(false);
       form.resetFields();

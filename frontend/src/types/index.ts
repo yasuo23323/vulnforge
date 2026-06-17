@@ -1,4 +1,4 @@
-export interface ScanTask {
+﻿export interface ScanTask {
   id: string; name: string; target_url: string; target_name: string | null;
   scanners: string[]; status: string; parameters: Record<string, unknown> | null;
   created_at: string; updated_at: string; started_at: string | null;
@@ -7,7 +7,7 @@ export interface ScanTask {
 
 export interface ScanCreateRequest {
   name: string; target_url: string; target_name?: string;
-  scanners?: string[]; parameters?: Record<string, unknown>;
+  scanners?: string[]; parameters?: Record<string, unknown>; cookies?: string;
 }
 
 export interface LLMAnalysisResult {
@@ -46,3 +46,4 @@ export interface AppSettings {
   llm_provider: string; llm_model: string; database_type: string;
   openai_key_set: boolean; anthropic_key_set: boolean;
 }
+
