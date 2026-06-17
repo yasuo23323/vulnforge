@@ -2,45 +2,36 @@
 
 WORKDIR /app
 
-# Install system dependencies + scanner tools
 RUN apt-get update && apt-get install -y --no-install-recommends \
-    gcc \
-    curl \
-    wget \
-    unzip \
+    gcc curl wget unzip \
     && rm -rf /var/lib/apt/lists/*
 
-# Set pip to use Tsinghua mirror (China-friendly)
-ENV PIP_INDEX_URL=https://pypi.org/simple
-
-# Install nuclei via ghproxy (GitHub mirror for China)
-RUN curl -sL -o nuclei.zip "https://github.com/projectdiscovery/nuclei/releases/latest/download/nuclei_linux_amd64.zip" \
+# Install nuclei (best-effort, falls back to Docker mode)
+RUN wget -q --tries=3 --timeout=30 \
+    "https://github.com/projectdiscovery/nuclei/releases/latest/download/nuclei_linux_amd64.zip" -O nuclei.zip \
     && unzip -q nuclei.zip -d /usr/local/bin/ \
     && rm nuclei.zip \
-    && chmod +x /usr/local/bin/nuclei
+    && chmod +x /usr/local/bin/nuclei || echo "[WARN] nuclei download failed, will use Docker mode"
 
-# Install dalfox via ghproxy
-RUN curl -sL -o dalfox.zip "https://github.com/hahwul/dalfox/releases/latest/download/dalfox_linux_amd64.zip" \
+# Install dalfox
+RUN wget -q --tries=3 --timeout=30 \
+    "https://github.com/hahwul/dalfox/releases/latest/download/dalfox_linux_amd64.zip" -O dalfox.zip \
     && unzip -q dalfox.zip -d /usr/local/bin/ \
     && rm dalfox.zip \
-    && chmod +x /usr/local/bin/dalfox
+    && chmod +x /usr/local/bin/dalfox || echo "[WARN] dalfox download failed"
 
-# Install ffuf via ghproxy
-RUN curl -sL -o ffuf.zip "https://github.com/ffuf/ffuf/releases/latest/download/ffuf_linux_amd64.zip" \
+# Install ffuf
+RUN wget -q --tries=3 --timeout=30 \
+    "https://github.com/ffuf/ffuf/releases/latest/download/ffuf_linux_amd64.zip" -O ffuf.zip \
     && unzip -q ffuf.zip -d /usr/local/bin/ \
     && rm ffuf.zip \
-    && chmod +x /usr/local/bin/ffuf
+    && chmod +x /usr/local/bin/ffuf || echo "[WARN] ffuf download failed"
 
-# sqlmap via pip (uses Tsinghua mirror)
+# sqlmap and Python deps
 RUN pip install --no-cache-dir sqlmap
-
-# Install Python dependencies (uses Tsinghua mirror)
 COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 
-# Copy application code
 COPY . .
-
 EXPOSE 8000
-
 CMD ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000"]
