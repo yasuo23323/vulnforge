@@ -23,6 +23,13 @@ else
 fi
 echo ""
 echo "Starting VulnForge..."
-docker compose -f final_version/docker-compose.yml up -d
+docker compose -f final_version/docker-compose.yml up -d 2>&1
+echo ""
+echo ""
+echo "========================================"
+echo "  Permission denied? Run with sudo:"
+echo "  sudo docker compose -f final_version/docker-compose.yml up -d"
+echo "========================================"
 echo ""
 echo "Done! Open http://YOUR_SERVER_IP:3000"
+

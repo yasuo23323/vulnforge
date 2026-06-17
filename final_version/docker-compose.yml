@@ -1,5 +1,4 @@
-﻿version: "3.8"
-services:
+﻿services:
   postgres:
     image: postgres:16-alpine
     environment:
@@ -26,6 +25,7 @@ services:
 
   backend:
     build: ../backend
+    env_file: ../.env
     ports:
       - "8000:8000"
     environment:
@@ -55,4 +55,5 @@ services:
 
 volumes:
   postgres_data:
+
 
