@@ -89,11 +89,11 @@ class ScannerOrchestrator:
                         break
                 return ["docker", "run", "--rm", "--network", "vulnforge_default",
                         "projectdiscovery/nuclei", "-u", mapped, "-j", "-silent",
-                        "-timeout", "5", "-retries", "1", "-severity", "critical,high,medium"]
+                        "-timeout", "10", "-retries", "2", "-severity", "critical,high,medium,low"]
             else:
                 return ["docker", "run", "--rm",
                         "projectdiscovery/nuclei", "-u", mapped, "-j", "-silent",
-                        "-timeout", "5", "-retries", "1", "-severity", "critical,high,medium"]
+                        "-timeout", "10", "-retries", "2", "-severity", "critical,high,medium,low"]
 
         if scanner_name == "sqlmap":
             sqlmap_path = os.path.join(os.path.dirname(sys.executable), "sqlmap.exe")
@@ -111,3 +111,4 @@ class ScannerOrchestrator:
                     "-u", f"{target_url}/FUZZ", "-w", "-", "-t", "10", "-ac", "-s"]
 
         return None
+
