@@ -1,7 +1,5 @@
 ﻿import asyncio
 import subprocess
-import tempfile
-import json
 import sys
 import os
 from typing import Optional
@@ -55,56 +53,49 @@ class ScannerOrchestrator:
         cmd = self._build_command(scanner_name, target_url, **kwargs)
         if not cmd:
             raise ValueError(f"No command for: {scanner_name}")
-        process = await asyncio.create_subprocess_exec(*cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-        stdout, stderr = await asyncio.wait_for(process.communicate(), timeout=120)
+
+        # Handle ffuf: pipe wordlist via stdin to Docker container
+        stdin_data = None
+        stdin_pipe = None
+        if scanner_name == "ffuf":
+            wordlist_path = os.path.join(os.path.dirname(__file__), "common.txt")
+            if os.path.exists(wordlist_path):
+                with open(wordlist_path, "rb") as f:
+                    stdin_data = f.read()
+            stdin_pipe = subprocess.PIPE
+
+        process = await asyncio.create_subprocess_exec(
+            *cmd, stdin=stdin_pipe, stdout=subprocess.PIPE, stderr=subprocess.PIPE
+        )
+        stdout, stderr = await asyncio.wait_for(process.communicate(input=stdin_data), timeout=120)
         raw_output = stdout.decode("utf-8", errors="replace")
         return parser(raw_output, target_url)
 
     def _build_command(self, scanner_name: str, target_url: str, **kwargs) -> Optional[list[str]]:
-        path_map = {
-            "nuclei": settings.SCANNER_NUCLEI_PATH,
-            "dalfox": settings.SCANNER_DALFOX_PATH,
-            "ffuf": settings.SCANNER_FFUF_PATH,
-        }
-        binary = path_map.get(scanner_name)
-
         if scanner_name == "nuclei":
-            # Use Docker to avoid localhost resolution issues in nuclei v3.9.0
-            try:
-                import subprocess as _sp
-                _sp.run(["docker", "info"], capture_output=True, timeout=5, check=True)
-                _docker_ok = True
-            except:
-                _docker_ok = False
-            
-            if _docker_ok:
-                mapped = target_url
-                # Map localhost to Docker container names
-                if "127.0.0.1" in target_url or "localhost" in target_url:
-                    port_map = {
-                        "3001": ("vulnforge-juice-shop-1", "3000"),
-                        "3002": ("vulnforge-dvwa-1", "80"),
-                        "3003": ("vulnforge-webgoat-1", "8080"),
-                    }
-                    for host_port, (container, container_port) in port_map.items():
-                        if ":" + host_port in target_url:
-                            for prefix in ["http://127.0.0.1:", "http://localhost:"]:
-                                mapped = mapped.replace(prefix + host_port, "http://" + container + ":" + container_port)
-                            break
-                    return ["docker", "run", "--rm", "--network", "vulnforge_default",
-                            "projectdiscovery/nuclei", "-u", mapped, "-j", "-silent",
-                            "-timeout", "5", "-retries", "1", "-severity", "critical,high,medium"]
-                else:
-                    return ["docker", "run", "--rm",
-                            "projectdiscovery/nuclei", "-u", mapped, "-j", "-silent",
-                            "-timeout", "5", "-retries", "1", "-severity", "critical,high,medium"]
+            # Always use Docker mode (Docker CLI is installed in the container)
+            mapped = target_url
+            if "127.0.0.1" in target_url or "localhost" in target_url:
+                port_map = {
+                    "3001": ("vulnforge-juice-shop-1", "3000"),
+                    "3002": ("vulnforge-dvwa-1", "80"),
+                    "3003": ("vulnforge-webgoat-1", "8080"),
+                    "8080": ("dvwa", "80"),
+                }
+                for host_port, (container, container_port) in port_map.items():
+                    if ":" + host_port in target_url:
+                        for prefix in ["http://127.0.0.1:", "http://localhost:"]:
+                            mapped = mapped.replace(prefix + host_port, "http://" + container + ":" + container_port)
+                        break
+                return ["docker", "run", "--rm", "--network", "vulnforge_default",
+                        "projectdiscovery/nuclei", "-u", mapped, "-j", "-silent",
+                        "-timeout", "5", "-retries", "1", "-severity", "critical,high,medium"]
             else:
-                return [binary, "-u", target_url, "-j", "-silent",
-                        "-timeout", "5", "-retries", "1",
-                        "-severity", "critical,high,medium"]
+                return ["docker", "run", "--rm",
+                        "projectdiscovery/nuclei", "-u", mapped, "-j", "-silent",
+                        "-timeout", "5", "-retries", "1", "-severity", "critical,high,medium"]
 
         if scanner_name == "sqlmap":
-            # Find sqlmap executable in venv Scripts or system PATH
             sqlmap_path = os.path.join(os.path.dirname(sys.executable), "sqlmap.exe")
             if not os.path.exists(sqlmap_path):
                 sqlmap_path = "sqlmap"
@@ -112,20 +103,11 @@ class ScannerOrchestrator:
                     "--level", "1", "--risk", "1", "--no-cast", "--flush-session"]
 
         if scanner_name == "dalfox":
-            return [binary, "url", "--url", target_url, "--silence"]
+            return ["docker", "run", "--rm", "hahwul/dalfox", "url", "--url", target_url, "--silence"]
 
         if scanner_name == "ffuf":
-            wordlist = kwargs.get("wordlist", "")
-            if not wordlist or not os.path.exists(wordlist):
-                builtin = os.path.join(os.path.dirname(__file__), "common.txt")
-                if os.path.exists(builtin):
-                    wordlist = builtin
-                else:
-                    wordlist = os.path.join(settings.tools_dir, "common.txt")
-            return [binary, "-u", f"{target_url}/FUZZ", "-w", wordlist,
-                    "-t", "10", "-ac", "-s"]
+            # Pipe wordlist via stdin (handled by _run_scanner_subprocess)
+            return ["docker", "run", "--rm", "-i", "ffuf/ffuf",
+                    "-u", f"{target_url}/FUZZ", "-w", "-", "-t", "10", "-ac", "-s"]
+
         return None
-
-
-
-
