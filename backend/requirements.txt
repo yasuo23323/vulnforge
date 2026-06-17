@@ -1,4 +1,4 @@
-aiosqlite==0.22.1
+﻿aiosqlite==0.22.1
 alembic==1.18.4
 amqp==5.3.1
 annotated-doc==0.0.4
@@ -42,7 +42,6 @@ pytest-asyncio==1.4.0
 python-dateutil==2.9.0.post0
 python-dotenv==1.2.2
 python-multipart==0.0.32
-pywin32==312
 redis==8.0.0
 requests==2.34.2
 six==1.17.0
