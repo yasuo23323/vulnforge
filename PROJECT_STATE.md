@@ -9,39 +9,29 @@ Master's thesis project. Built by Codex (GPT-5 based coding agent).
 ---
 
 
-## TODAY'S WORK (2026-06-17)
+## TODAY'S WORK (2026-06-17 Final)
 
-### Bug #1 Fixed: DVWA Authentication (P0)
-- **Root cause**: CSRF token extraction created a new PHP session, but login used the old session cookie -> token/session mismatch -> login silently rejected
-- **Fix**: Extract token and submit login in the SAME HTTP session (same PHPSESSID)
-- **Verification**: curl.exe with -c and -b on same cookie file confirmed login works
-- **DVWA scan results**: 6 vulnerability types accessible (SQLi, SQLi Blind, XSS Reflected, Command Injection, File Inclusion, Brute Force), 4 confirmed injectable with payloads
+### Project Complete - Pushed to GitHub
+- Repository: https://github.com/yasuo23323/vulnforge
+- Verified running on Kali Linux via Docker
+- Tool downloads fixed with retry + graceful fallback
+- Removed pywin32 (Windows-only, broke Linux builds)
+- Deployed with: bash final_version/start.sh (one-click setup)
 
-### Bug #2 Fixed: Nuclei localhost resolution (P0)
-- **Root cause**: Nuclei v3.9.0 health check on Windows/Docker marks localhost:port as "unresponsive" and skips target
-- **Fix**: Run nuclei INSIDE the Docker network via docker run projectdiscovery/nuclei --network vulnforge_default
-- **Verification**: Juice Shop: Prometheus Metrics (medium). DVWA: Default Login (critical) + Config Listing (medium). No skip issues.
-- **Reliable methodology**: docker run --rm --network vulnforge_default projectdiscovery/nuclei -u http://CONTAINER_NAME:PORT -j -severity critical,high,medium
+### Production Deployment (final_version/)
+- docker-compose.yml — services: postgres, redis, backend, frontend
+- .env.example — API key configuration
+- start.sh — auto-creates .env, prompts for API key, starts Docker
+- start.bat — Windows equivalent
+- Orchestrator uses Docker for nuclei scanning (no local install needed)
 
-
-
-
-### End-to-End Pipeline (NEW - Verified 2026-06-17)
-- [x] Create scan via API (POST /api/scans) — triggers background execution
-- [x] Background scanner execution (via asyncio.create_task, 180s timeout)
-- [x] Scanner subprocess (ffuf, nuclei, dalfox, sqlmap) with proper parsers
-- [x] Status updates: pending -> running -> completed/failed
-- [x] Findings stored in DB, retrievable via API
-- [x] All scanner commands fixed:
-  - nuclei: -j (not -json), -severity critical,high,medium for speed
-  - dalfox: --url flag, --headers (not --header)
-  - ffuf: silent mode with common.txt wordlist
-  - sqlmap: uses sqlmap.exe (not python -m sqlmap)
-- [x] Parser fixes:
-  - All parsers accept 	arget_url as optional 2nd arg (matching orchestrator call convention)
-  - dalfox parser detects "XSS" instead of "VULNERABLE"
-  - ffuf parser handles silent mode output (plain paths)
-  - sqlmap parser detects "Parameter:" and "is vulnerable"## PENDING / NEXT STEPS
+### What's Working
+- Backend: 16 API routes, scanner engine, LLM analysis (3 strategies)
+- Frontend: 6 pages (Dashboard, Scan Tasks, Scan Detail, Results, Settings)
+- Scanners: nuclei (via Docker), ffuf, dalfox, sqlmap
+- Real dataset: 88 findings across Juice Shop + DVWA
+- LLM analysis: 255 DeepSeek API calls with ground truth metrics
+## PENDING / NEXT STEPS
 
 ### Immediate Fixes Needed
 - [x] ~~DVWA authentication~~ FIXED 2026-06-17: CSRF token extracted in wrong session; must use same PHPSESSID for token extraction and login
@@ -72,6 +62,7 @@ Master's thesis project. Built by Codex (GPT-5 based coding agent).
 3. Dalfox: Juice Shop requires authenticated POST-based XSS; default GET scan finds nothing
 4. SQLMap: doesn"t support JSON POST body natively; use `--data-raw` for limited support
 5. Windows GBK encoding: set `PYTHONIOENCODING=utf-8` for emoji/Unicode output
+
 
 
 
