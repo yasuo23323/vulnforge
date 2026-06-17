@@ -1,4 +1,4 @@
-import asyncio
+﻿import asyncio
 import subprocess
 import tempfile
 import json
@@ -117,11 +117,15 @@ class ScannerOrchestrator:
         if scanner_name == "ffuf":
             wordlist = kwargs.get("wordlist", "")
             if not wordlist or not os.path.exists(wordlist):
-                wordlist = os.path.join(settings.tools_dir, "common.txt")
+                builtin = os.path.join(os.path.dirname(__file__), "common.txt")
+                if os.path.exists(builtin):
+                    wordlist = builtin
+                else:
+                    wordlist = os.path.join(settings.tools_dir, "common.txt")
             return [binary, "-u", f"{target_url}/FUZZ", "-w", wordlist,
                     "-t", "10", "-ac", "-s"]
-
         return None
+
 
 
 

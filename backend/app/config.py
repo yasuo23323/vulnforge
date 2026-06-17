@@ -1,4 +1,4 @@
-import os
+﻿import os
 from pydantic_settings import BaseSettings
 from typing import Optional
 
@@ -35,7 +35,7 @@ class Settings(BaseSettings):
 
     @property
     def SCANNER_NUCLEI_PATH(self) -> str:
-        return os.path.join(self.tools_dir, "nuclei.exe")
+        return "nuclei" if sys.platform != "win32" else os.path.join(self.tools_dir, "nuclei.exe")
 
     @property
     def SCANNER_SQLMAP_PATH(self) -> str:
@@ -43,11 +43,11 @@ class Settings(BaseSettings):
 
     @property
     def SCANNER_DALFOX_PATH(self) -> str:
-        return os.path.join(self.tools_dir, "dalfox.exe")
+        return "dalfox" if sys.platform != "win32" else os.path.join(self.tools_dir, "dalfox.exe")
 
     @property
     def SCANNER_FFUF_PATH(self) -> str:
-        return os.path.join(self.tools_dir, "ffuf.exe")
+        return "ffuf" if sys.platform != "win32" else os.path.join(self.tools_dir, "ffuf.exe")
 
     DOCKER_SANDBOX_ENABLED: bool = False
     DOCKER_SANDBOX_NETWORK: str = "vulnforge_scan"
@@ -65,3 +65,4 @@ class Settings(BaseSettings):
 
 
 settings = Settings()
+
