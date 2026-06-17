@@ -1,0 +1,785 @@
+{
+  "experiment_metadata": {
+    "title": "VulnForge LLM Strategy Evaluation",
+    "date": "2026-06-15",
+    "llm_provider": "DeepSeek",
+    "llm_model": "deepseek-chat",
+    "strategies": [
+      "zero_shot",
+      "few_shot",
+      "chain_of_thought"
+    ],
+    "dataset_size": 72,
+    "note": "Findings are curated examples (not from live scans). Metrics are from real DeepSeek API calls."
+  },
+  "dataset": {
+    "description": "72 curated vulnerability findings with human-assigned ground truth labels. 6 vulnerability types, perfectly balanced TP/FP per type.",
+    "total_findings": 72,
+    "true_positives": 36,
+    "false_positives": 36,
+    "by_vulnerability_type": {
+      "sql_injection": {
+        "tp": 8,
+        "fp": 8,
+        "total": 16
+      },
+      "xss": {
+        "tp": 8,
+        "fp": 8,
+        "total": 16
+      },
+      "path_traversal": {
+        "tp": 6,
+        "fp": 6,
+        "total": 12
+      },
+      "ssrf": {
+        "tp": 6,
+        "fp": 6,
+        "total": 12
+      },
+      "command_injection": {
+        "tp": 4,
+        "fp": 4,
+        "total": 8
+      },
+      "open_redirect": {
+        "tp": 4,
+        "fp": 4,
+        "total": 8
+      }
+    },
+    "findings": [
+      {
+        "scanner": "sqlmap",
+        "vuln_type": "sql_injection",
+        "severity": "critical",
+        "url": "http://testphp.vulnweb.com/products.php?cat=1",
+        "desc": "Error-based SQL injection in cat parameter",
+        "evidence": "GET /products.php?cat=1%27 200 OK...MySQL Error: You have an error in your SQL syntax",
+        "gt": "true_positive"
+      },
+      {
+        "scanner": "sqlmap",
+        "vuln_type": "sql_injection",
+        "severity": "high",
+        "url": "http://testphp.vulnweb.com/login.php",
+        "desc": "Time-based blind SQL injection in username",
+        "evidence": "POST /login.php...username=admin%27+AND+SLEEP(5)--&password=test...Response time: 5.2s",
+        "gt": "true_positive"
+      },
+      {
+        "scanner": "nuclei",
+        "vuln_type": "sql_injection",
+        "severity": "high",
+        "url": "http://testphp.vulnweb.com/artists.php?id=1",
+        "desc": "Union-based SQL injection in id parameter",
+        "evidence": "GET /artists.php?id=1+UNION+SELECT+1,2,3,4,5...200 OK...Numbers 1,2,3,4,5 in output",
+        "gt": "true_positive"
+      },
+      {
+        "scanner": "sqlmap",
+        "vuln_type": "sql_injection",
+        "severity": "critical",
+        "url": "http://testphp.vulnweb.com/listproducts.php?artist=1",
+        "desc": "Stacked query SQL injection in artist parameter",
+        "evidence": "GET /listproducts.php?artist=1;DROP+TABLE+users--...200 OK...Table users dropped confirmed",
+        "gt": "true_positive"
+      },
+      {
+        "scanner": "nuclei",
+        "vuln_type": "sql_injection",
+        "severity": "high",
+        "url": "http://testphp.vulnweb.com/categories.php?id=2",
+        "desc": "Boolean blind SQL injection in id parameter",
+        "evidence": "GET /categories.php?id=2+AND+1=1...200 OK (normal) vs id=2+AND+1=2...empty response",
+        "gt": "true_positive"
+      },
+      {
+        "scanner": "sqlmap",
+        "vuln_type": "sql_injection",
+        "severity": "high",
+        "url": "http://testphp.vulnweb.com/product.php?pid=5",
+        "desc": "Out-of-band SQL injection via DNS lookup",
+        "evidence": "GET /product.php?pid=5;exec+master..xp_dirtree...DNS lookup to attacker-controlled domain detected",
+        "gt": "true_positive"
+      },
+      {
+        "scanner": "dalfox",
+        "vuln_type": "sql_injection",
+        "severity": "medium",
+        "url": "http://testphp.vulnweb.com/search.php?q=test",
+        "desc": "Error-based SQLi in search parameter",
+        "evidence": "GET /search.php?q=test%27...500...MySQL error in search query parameter",
+        "gt": "true_positive"
+      },
+      {
+        "scanner": "nuclei",
+        "vuln_type": "sql_injection",
+        "severity": "high",
+        "url": "http://testphp.vulnweb.com/artist.php?id=3",
+        "desc": "Second-order SQL injection via stored data",
+        "evidence": "POST /review.php...review text stored...GET /artist.php?id=3 loads review into query without escaping",
+        "gt": "true_positive"
+      },
+      {
+        "scanner": "nuclei",
+        "vuln_type": "sql_injection",
+        "severity": "high",
+        "url": "http://testsite.com/search.php?q=hello",
+        "desc": "Possible SQLi - generic error page detected",
+        "evidence": "GET /search.php?q=hello%27...500 Error...App Error page, no SQL error messages in response",
+        "gt": "false_positive"
+      },
+      {
+        "scanner": "sqlmap",
+        "vuln_type": "sql_injection",
+        "severity": "high",
+        "url": "http://ecommerce.site/products?id=456",
+        "desc": "Possible SQLi - parameter dynamic behavior",
+        "evidence": "GET /products?id=456+AND+1=2...different content but no DB errors, template-based rendering",
+        "gt": "false_positive"
+      },
+      {
+        "scanner": "dalfox",
+        "vuln_type": "sql_injection",
+        "severity": "medium",
+        "url": "http://blog.example.com/posts?page=2",
+        "desc": "SQL warning pattern in user comment",
+        "evidence": "GET /posts?page=2%27...SQL command not properly ended found in user comment text, not system error",
+        "gt": "false_positive"
+      },
+      {
+        "scanner": "nuclei",
+        "vuln_type": "sql_injection",
+        "severity": "high",
+        "url": "http://news.site.com/article?id=101",
+        "desc": "Numeric ID reflected in URL without SQL connection",
+        "evidence": "GET /article?id=101+AND+1=1...same response...static HTML file, no database backend",
+        "gt": "false_positive"
+      },
+      {
+        "scanner": "sqlmap",
+        "vuln_type": "sql_injection",
+        "severity": "medium",
+        "url": "http://forum.site.com/profile?user=admin",
+        "desc": "URL-encoded quotes in username parameter",
+        "evidence": "GET /profile?user=admin%27--...200 OK...Quote encoded by WAF, parameter sanitized before DB query",
+        "gt": "false_positive"
+      },
+      {
+        "scanner": "nuclei",
+        "vuln_type": "sql_injection",
+        "severity": "high",
+        "url": "http://jobs.site.com/apply?id=55",
+        "desc": "SQL-like error message from application",
+        "evidence": "GET /apply?id=55%27...500...Error: SQLSTATE[42000] in log but app uses prepared statements, error from instrumentation",
+        "gt": "false_positive"
+      },
+      {
+        "scanner": "dalfox",
+        "vuln_type": "sql_injection",
+        "severity": "medium",
+        "url": "http://shop.site.com/order?id=42",
+        "desc": "Order ID parameter with quote reflection",
+        "evidence": "GET /order?id=42%27...200...Single quote reflected back in JSON error wrapper, not executed in DB context",
+        "gt": "false_positive"
+      },
+      {
+        "scanner": "sqlmap",
+        "vuln_type": "sql_injection",
+        "severity": "low",
+        "url": "http://wiki.site.com/page?title=Main_Page",
+        "desc": "Timing variation in page parameter",
+        "evidence": "GET /page?title=Main_Page%27+SLEEP(5)...6.2s...Cache miss caused delay, not SQL execution",
+        "gt": "false_positive"
+      },
+      {
+        "scanner": "dalfox",
+        "vuln_type": "xss",
+        "severity": "medium",
+        "url": "http://testphp.vulnweb.com/search.php?test=query",
+        "desc": "Reflected XSS - unescaped script tag",
+        "evidence": "GET /search.php?test=<script>alert(1)</script>...200 OK...Response reflects unencoded <script> in HTML context",
+        "gt": "true_positive"
+      },
+      {
+        "scanner": "dalfox",
+        "vuln_type": "xss",
+        "severity": "high",
+        "url": "http://testphp.vulnweb.com/guestbook.php",
+        "desc": "Stored XSS via comment submission",
+        "evidence": "POST /guestbook.php...name=<script>alert(1)</script>...Next page load shows unescaped tag in comments",
+        "gt": "true_positive"
+      },
+      {
+        "scanner": "dalfox",
+        "vuln_type": "xss",
+        "severity": "high",
+        "url": "http://testphp.vulnweb.com/search.php?test=query",
+        "desc": "DOM-based XSS via hash fragment",
+        "evidence": "GET /search.php#<img+src=x+onerror=alert(1)>...client-side JS reads location.hash into innerHTML unsafely",
+        "gt": "true_positive"
+      },
+      {
+        "scanner": "nuclei",
+        "vuln_type": "xss",
+        "severity": "critical",
+        "url": "http://testphp.vulnweb.com/cart.php?redir=javascript:alert(1)",
+        "desc": "XSS via javascript: URL in redirect parameter",
+        "evidence": "GET /cart.php?redir=javascript:alert(1)...302 redirect to javascript: URL...browser executes in redirect context",
+        "gt": "true_positive"
+      },
+      {
+        "scanner": "dalfox",
+        "vuln_type": "xss",
+        "severity": "medium",
+        "url": "http://testphp.vulnweb.com/feedback.php",
+        "desc": "XSS in user-agent header reflected in admin panel",
+        "evidence": "GET /feedback.php with User-Agent: <script>alert(1)</script>...200 OK...UA reflected in admin dashboard unescaped",
+        "gt": "true_positive"
+      },
+      {
+        "scanner": "nuclei",
+        "vuln_type": "xss",
+        "severity": "high",
+        "url": "http://testphp.vulnweb.com/profile.php",
+        "desc": "Self-XSS via profile name with no CSRF token",
+        "evidence": "POST /profile.php...name=<script>alert(document.cookie)</script>...name stored and displayed on profile page",
+        "gt": "true_positive"
+      },
+      {
+        "scanner": "dalfox",
+        "vuln_type": "xss",
+        "severity": "medium",
+        "url": "http://testphp.vulnweb.com/upload.php",
+        "desc": "XSS via SVG file upload",
+        "evidence": "POST /upload.php...file=<?xml?><svg+onload=alert(1)>...200 OK...SVG rendered as image/svg+xml without sanitization",
+        "gt": "true_positive"
+      },
+      {
+        "scanner": "nuclei",
+        "vuln_type": "xss",
+        "severity": "critical",
+        "url": "http://testphp.vulnweb.com/api/search?q=<script>alert(1)</script>",
+        "desc": "XSS in JSONP callback parameter",
+        "evidence": "GET /api/search?callback=<script>alert(1)</script>...200 OK...callback parameter reflected in Content-Type text/javascript",
+        "gt": "true_positive"
+      },
+      {
+        "scanner": "nuclei",
+        "vuln_type": "xss",
+        "severity": "medium",
+        "url": "http://testphp.vulnweb.com/search.php?q=hello",
+        "desc": "Input value reflected in response",
+        "evidence": "GET /search.php?q=<script>alert(1)</script>...200 OK...Response contains &lt;script&gt; - HTML entities encoded",
+        "gt": "false_positive"
+      },
+      {
+        "scanner": "nuclei",
+        "vuln_type": "xss",
+        "severity": "medium",
+        "url": "http://forum.site.com/viewtopic?pid=123",
+        "desc": "Reflected parameter in JSON API response",
+        "evidence": "GET /viewtopic?pid=<script>alert(1)</script>...200 OK...Content-Type: application/json, input in JSON value not HTML",
+        "gt": "false_positive"
+      },
+      {
+        "scanner": "dalfox",
+        "vuln_type": "xss",
+        "severity": "low",
+        "url": "http://wiki.site.com/wiki/Page_Name",
+        "desc": "Parameter in URL path partially encoded",
+        "evidence": "GET /wiki/<script>alert(1)</script>...404...partial encoding, Content-Type not text/html",
+        "gt": "false_positive"
+      },
+      {
+        "scanner": "nuclei",
+        "vuln_type": "xss",
+        "severity": "medium",
+        "url": "http://cms.site.com/search?q=hello",
+        "desc": "CSP headers with reflected parameter",
+        "evidence": "GET /search?q=<script>alert(1)</script>...200 OK...CSP: default-src 'self' blocks inline script execution",
+        "gt": "false_positive"
+      },
+      {
+        "scanner": "dalfox",
+        "vuln_type": "xss",
+        "severity": "medium",
+        "url": "http://bank.site.com/transfer?amount=100",
+        "desc": "Amount parameter reflected in confirmation page",
+        "evidence": "GET /transfer?amount=<script>alert(1)</script>...200 OK...input sanitized via server-side HTML escaping",
+        "gt": "false_positive"
+      },
+      {
+        "scanner": "nuclei",
+        "vuln_type": "xss",
+        "severity": "low",
+        "url": "http://docs.site.com/api/v1/users",
+        "desc": "HTML-like content in API documentation",
+        "evidence": "GET /api/v1/users...200 OK...response contains example <script>...</script> in code block, not executed",
+        "gt": "false_positive"
+      },
+      {
+        "scanner": "dalfox",
+        "vuln_type": "xss",
+        "severity": "medium",
+        "url": "http://blog.site.com/search?tag=<script>alert</script>",
+        "desc": "Search tag in URL with Content-Disposition header",
+        "evidence": "GET /search?tag=<script>alert</script>...200 OK...Content-Disposition: attachment; Content-Type: text/plain",
+        "gt": "false_positive"
+      },
+      {
+        "scanner": "nuclei",
+        "vuln_type": "xss",
+        "severity": "high",
+        "url": "http://gov.site.com/report?id=99",
+        "desc": "ID parameter reflected in PDF download filename",
+        "evidence": "GET /report?id=<script>alert(1)</script>...200...Content-Type: application/pdf, not HTML context",
+        "gt": "false_positive"
+      },
+      {
+        "scanner": "nuclei",
+        "vuln_type": "path_traversal",
+        "severity": "high",
+        "url": "http://testsite.com/download.php?file=../../../etc/passwd",
+        "desc": "LFI via path traversal in file parameter",
+        "evidence": "GET /download.php?file=../../etc/passwd...200 OK...root:x:0:0:root:/root:/bin/bash...",
+        "gt": "true_positive"
+      },
+      {
+        "scanner": "ffuf",
+        "vuln_type": "path_traversal",
+        "severity": "medium",
+        "url": "http://ecommerce.site/admin/backup.sql",
+        "desc": "Exposed backup SQL file via directory brute-force",
+        "evidence": "GET /admin/backup.sql...200 OK...DROP TABLE IF EXISTS users;...SQL backup with user credentials",
+        "gt": "true_positive"
+      },
+      {
+        "scanner": "nuclei",
+        "vuln_type": "path_traversal",
+        "severity": "high",
+        "url": "http://testsite.com/includes/page.php?template=about",
+        "desc": "Local file read via template parameter",
+        "evidence": "GET /page.php?template=../../../etc/passwd...200 OK...root:x:0:0:root:...File read successful",
+        "gt": "true_positive"
+      },
+      {
+        "scanner": "nuclei",
+        "vuln_type": "path_traversal",
+        "severity": "critical",
+        "url": "http://testsite.com/admin/logs?file=app.log",
+        "desc": "Log file download with directory traversal",
+        "evidence": "GET /admin/logs?file=../../../etc/shadow...200 OK...root:$6$salt$hash:...shadow file contents exposed",
+        "gt": "true_positive"
+      },
+      {
+        "scanner": "ffuf",
+        "vuln_type": "path_traversal",
+        "severity": "high",
+        "url": "http://ecommerce.site/.git/config",
+        "desc": "Exposed Git repository via directory brute-force",
+        "evidence": "GET /.git/config...200 OK...[remote origin] url = https://github.com/org/repo.git...full repo config exposed",
+        "gt": "true_positive"
+      },
+      {
+        "scanner": "nuclei",
+        "vuln_type": "path_traversal",
+        "severity": "medium",
+        "url": "http://testsite.com/static?file=style.css",
+        "desc": "Static file serving with directory traversal",
+        "evidence": "GET /static?file=../../../etc/passwd...200 OK...Content-Type: text/plain...passwd file served through static handler",
+        "gt": "true_positive"
+      },
+      {
+        "scanner": "nuclei",
+        "vuln_type": "path_traversal",
+        "severity": "high",
+        "url": "http://cms.site.com/template.php?file=index",
+        "desc": "Path traversal attempt - file not found",
+        "evidence": "GET /template.php?file=../../../../etc/passwd...404...App prepends dir and appends .php extension",
+        "gt": "false_positive"
+      },
+      {
+        "scanner": "ffuf",
+        "vuln_type": "path_traversal",
+        "severity": "medium",
+        "url": "http://ecommerce.site/images/product.jpg",
+        "desc": "Directory enumeration via ../ patterns",
+        "evidence": "GET /images/../admin/...302 Found...Path normalization occurs before access check",
+        "gt": "false_positive"
+      },
+      {
+        "scanner": "ffuf",
+        "vuln_type": "path_traversal",
+        "severity": "low",
+        "url": "http://cms.site.com/js/jquery.js",
+        "desc": "Discovered JavaScript file via brute-force",
+        "evidence": "GET /js/jquery.js...200 OK.../*! jQuery v3.6.0 */...Standard library, not sensitive",
+        "gt": "false_positive"
+      },
+      {
+        "scanner": "nuclei",
+        "vuln_type": "path_traversal",
+        "severity": "high",
+        "url": "http://portal.site.com/download?id=123",
+        "desc": "File download with numeric ID parameter",
+        "evidence": "GET /download?id=../../../etc/passwd...400...ID validation rejects non-numeric input at application level",
+        "gt": "false_positive"
+      },
+      {
+        "scanner": "ffuf",
+        "vuln_type": "path_traversal",
+        "severity": "medium",
+        "url": "http://docs.site.com/phpmyadmin/",
+        "desc": "phpMyAdmin path discovered via ffuf",
+        "evidence": "GET /phpmyadmin/...403 Forbidden...Access restricted by .htaccess and IP whitelist",
+        "gt": "false_positive"
+      },
+      {
+        "scanner": "nuclei",
+        "vuln_type": "path_traversal",
+        "severity": "low",
+        "url": "http://blog.site.com/backup/",
+        "desc": "Backup directory listing discovered",
+        "evidence": "GET /backup/...200 OK...Directory listing of empty backup folder, no sensitive files present",
+        "gt": "false_positive"
+      },
+      {
+        "scanner": "nuclei",
+        "vuln_type": "ssrf",
+        "severity": "critical",
+        "url": "http://cloud.site.com/fetch?url=http://169.254.169.254/latest/meta-data/",
+        "desc": "SSRF to cloud metadata service",
+        "evidence": "GET /fetch?url=http://169.254.169.254/latest/...200 OK...ami-id, instance-id returned",
+        "gt": "true_positive"
+      },
+      {
+        "scanner": "nuclei",
+        "vuln_type": "ssrf",
+        "severity": "high",
+        "url": "http://internal.site.com/proxy?url=http://localhost:8080/health",
+        "desc": "SSRF to internal service",
+        "evidence": "GET /proxy?url=http://localhost:8080/health...200 OK...{\"status\":\"UP\"} - internal health check",
+        "gt": "true_positive"
+      },
+      {
+        "scanner": "nuclei",
+        "vuln_type": "ssrf",
+        "severity": "high",
+        "url": "http://shop.site.com/load?path=http://evil.com/test",
+        "desc": "External URL fetch capability detected",
+        "evidence": "GET /load?path=http://evil.com/test...200 OK...External DNS lookup performed, outbound connection made",
+        "gt": "true_positive"
+      },
+      {
+        "scanner": "nuclei",
+        "vuln_type": "ssrf",
+        "severity": "critical",
+        "url": "http://internal.site.com/proxy?url=file:///etc/passwd",
+        "desc": "SSRF via file:// protocol to read local files",
+        "evidence": "GET /proxy?url=file:///etc/passwd...200 OK...root:x:0:0:root...File protocol not blocked by URL filter",
+        "gt": "true_positive"
+      },
+      {
+        "scanner": "nuclei",
+        "vuln_type": "ssrf",
+        "severity": "high",
+        "url": "http://cloud.site.com/upload?image=http://internal.database:5432/",
+        "desc": "SSRF to internal database port",
+        "evidence": "GET /upload?image=http://internal.database:5432/...200 OK...PostgreSQL response banner received",
+        "gt": "true_positive"
+      },
+      {
+        "scanner": "nuclei",
+        "vuln_type": "ssrf",
+        "severity": "medium",
+        "url": "http://api.site.com/webhook?target=http://10.0.0.1:22/",
+        "desc": "SSRF probe to internal subnet",
+        "evidence": "GET /webhook?target=http://10.0.0.1:22/...connection timed out (30s) but outbound attempt confirmed via DNS",
+        "gt": "true_positive"
+      },
+      {
+        "scanner": "nuclei",
+        "vuln_type": "ssrf",
+        "severity": "medium",
+        "url": "http://cms.site.com/import?feed=http://rss.example.com/news.xml",
+        "desc": "External RSS feed import",
+        "evidence": "GET /import?feed=http://rss.example.com/news.xml...200 OK...RSS feed fetched as designed function",
+        "gt": "false_positive"
+      },
+      {
+        "scanner": "nuclei",
+        "vuln_type": "ssrf",
+        "severity": "medium",
+        "url": "http://blog.site.com/avatar?url=http://gravatar.com/avatar.jpg",
+        "desc": "Avatar URL fetch with domain whitelist",
+        "evidence": "GET /avatar?url=http://gravatar.com/avatar.jpg...200 OK...Only whitelisted domains allowed",
+        "gt": "false_positive"
+      },
+      {
+        "scanner": "nuclei",
+        "vuln_type": "ssrf",
+        "severity": "high",
+        "url": "http://api.site.com/webhook?callback=http://requestbin.net/r/test",
+        "desc": "SSRF via callback parameter (external only)",
+        "evidence": "GET /webhook?callback=http://requestbin.net/r/test...200 OK...External webhook service, no internal access",
+        "gt": "false_positive"
+      },
+      {
+        "scanner": "nuclei",
+        "vuln_type": "ssrf",
+        "severity": "medium",
+        "url": "http://dev.site.com/compile?code_url=https://github.com/org/repo",
+        "desc": "URL to public code repository for compilation",
+        "evidence": "GET /compile?code_url=https://github.com/org/repo...200...URL filtered: only github.com and gitlab.com allowed",
+        "gt": "false_positive"
+      },
+      {
+        "scanner": "nuclei",
+        "vuln_type": "ssrf",
+        "severity": "high",
+        "url": "http://admin.site.com/export?path=\\attacker/share/file",
+        "desc": "SMB share path in export parameter",
+        "evidence": "GET /export?path=\\\u0007ttacker\\share\\file...403...SMB protocol blocked by firewall at network layer",
+        "gt": "false_positive"
+      },
+      {
+        "scanner": "nuclei",
+        "vuln_type": "ssrf",
+        "severity": "low",
+        "url": "http://docs.site.com/preview?url=http://example.com/doc.pdf",
+        "desc": "Document preview with public URL",
+        "evidence": "GET /preview?url=http://example.com/doc.pdf...200...URL resolved but only HTTP 200 responses from public domains accepted",
+        "gt": "false_positive"
+      },
+      {
+        "scanner": "nuclei",
+        "vuln_type": "command_injection",
+        "severity": "critical",
+        "url": "http://tools.site.com/ping?host=127.0.0.1;id",
+        "desc": "Command injection in ping parameter",
+        "evidence": "GET /ping?host=127.0.0.1;id...200 OK...uid=33(www-data) gid=33(www-data)...command output in response",
+        "gt": "true_positive"
+      },
+      {
+        "scanner": "nuclei",
+        "vuln_type": "command_injection",
+        "severity": "high",
+        "url": "http://admin.site.com/traceroute?ip=8.8.8.8|whoami",
+        "desc": "Command injection via pipe in traceroute",
+        "evidence": "GET /traceroute?ip=8.8.8.8|whoami...200 OK...desktop-admin in response body",
+        "gt": "true_positive"
+      },
+      {
+        "scanner": "nuclei",
+        "vuln_type": "command_injection",
+        "severity": "critical",
+        "url": "http://tools.site.com/convert?format=png&file=test.jpg",
+        "desc": "Command injection via filename in image conversion",
+        "evidence": "GET /convert?format=png&file=test.jpg;cat+/etc/shadow...200 OK...password hashes in response",
+        "gt": "true_positive"
+      },
+      {
+        "scanner": "nuclei",
+        "vuln_type": "command_injection",
+        "severity": "high",
+        "url": "http://dev.site.com/deploy?branch=main",
+        "desc": "Command injection via backtick in branch name",
+        "evidence": "GET /deploy?branch=main`id`...200 OK...uid=1000(deploy) gid=1000(deploy) in deployment log output",
+        "gt": "true_positive"
+      },
+      {
+        "scanner": "nuclei",
+        "vuln_type": "command_injection",
+        "severity": "high",
+        "url": "http://tools.site.com/ping?host=127.0.0.1",
+        "desc": "Ping parameter with special characters sanitized",
+        "evidence": "GET /ping?host=127.0.0.1;id...200 OK...;id stripped by input filter, only IP ping executed",
+        "gt": "false_positive"
+      },
+      {
+        "scanner": "nuclei",
+        "vuln_type": "command_injection",
+        "severity": "medium",
+        "url": "http://status.site.com/check?domain=example.com",
+        "desc": "Domain check with URL validation",
+        "evidence": "GET /check?domain=example.com|whoami...200 OK...|whoami rejected by domain validation regex",
+        "gt": "false_positive"
+      },
+      {
+        "scanner": "nuclei",
+        "vuln_type": "command_injection",
+        "severity": "high",
+        "url": "http://tools.site.com/exec?cmd=ls",
+        "desc": "Command execution in query parameter",
+        "evidence": "GET /exec?cmd=ls+-la...403...cmd parameter blocked by mod_security WAF rule 950907",
+        "gt": "false_positive"
+      },
+      {
+        "scanner": "nuclei",
+        "vuln_type": "command_injection",
+        "severity": "medium",
+        "url": "http://admin.site.com/generate?template=report",
+        "desc": "Template parameter with shell metacharacters",
+        "evidence": "GET /generate?template=report$(id)...500...Shell metacharacters escaped via PHP escapeshellarg()",
+        "gt": "false_positive"
+      },
+      {
+        "scanner": "nuclei",
+        "vuln_type": "open_redirect",
+        "severity": "medium",
+        "url": "http://shop.site.com/redirect?url=http://evil.com",
+        "desc": "Open redirect via url parameter",
+        "evidence": "GET /redirect?url=http://evil.com...302 Found...Location: http://evil.com - no validation on redirect target",
+        "gt": "true_positive"
+      },
+      {
+        "scanner": "nuclei",
+        "vuln_type": "open_redirect",
+        "severity": "medium",
+        "url": "http://login.site.com/?next=http://phishing.com",
+        "desc": "Open redirect in OAuth callback parameter",
+        "evidence": "GET /login/?next=http://phishing.com...302...Location: http://phishing.com - OAuth redirect not validated",
+        "gt": "true_positive"
+      },
+      {
+        "scanner": "nuclei",
+        "vuln_type": "open_redirect",
+        "severity": "low",
+        "url": "http://blog.site.com/go?to=https://evil.net",
+        "desc": "Open redirect via short URL service",
+        "evidence": "GET /go?to=https://evil.net...302...Location: https://evil.net - no host whitelist applied",
+        "gt": "true_positive"
+      },
+      {
+        "scanner": "ffuf",
+        "vuln_type": "open_redirect",
+        "severity": "high",
+        "url": "http://cms.site.com//google.com",
+        "desc": "Open redirect via path-based redirect",
+        "evidence": "GET //google.com...301...Location: https://google.com - path-based redirect without validation",
+        "gt": "true_positive"
+      },
+      {
+        "scanner": "nuclei",
+        "vuln_type": "open_redirect",
+        "severity": "medium",
+        "url": "http://bank.site.com/redirect?url=https://bank.site.com/secure",
+        "desc": "Redirect parameter points to same domain",
+        "evidence": "GET /redirect?url=https://bank.site.com/secure...302...Location: same-origin only via domain whitelist",
+        "gt": "false_positive"
+      },
+      {
+        "scanner": "nuclei",
+        "vuln_type": "open_redirect",
+        "severity": "low",
+        "url": "http://docs.site.com/out?ref=github.com",
+        "desc": "External link with nofollow and referrerpolicy",
+        "evidence": "GET /out?ref=github.com...200...nofollow noopener noreferrer + rel attribute, intermediate warning page",
+        "gt": "false_positive"
+      },
+      {
+        "scanner": "nuclei",
+        "vuln_type": "open_redirect",
+        "severity": "medium",
+        "url": "http://portal.site.com/sso?redirect_uri=https://portal.site.com/callback",
+        "desc": "SSO redirect with exact URI match",
+        "evidence": "GET /sso?redirect_uri=https://portal.site.com/callback...302...redirect_uri validated against registered callback list",
+        "gt": "false_positive"
+      },
+      {
+        "scanner": "nuclei",
+        "vuln_type": "open_redirect",
+        "severity": "medium",
+        "url": "http://email.site.com/unsubscribe?id=abc123&redirect=/prefs",
+        "desc": "Email unsubscribe redirect path only",
+        "evidence": "GET /unsubscribe?id=abc123&redirect=/prefs...302...relative path only accepted, full URL rejected",
+        "gt": "false_positive"
+      }
+    ]
+  },
+  "aggregate_metrics": {
+    "zero_shot": {
+      "confusion_matrix": {
+        "tp": 31,
+        "fp": 1,
+        "fn": 4,
+        "tn": 34
+      },
+      "metrics": {
+        "Precision": 0.96875,
+        "Recall": 0.8857142857142857,
+        "F1": 0.9253731343283582,
+        "Accuracy": 0.9285714285714286,
+        "FPR": 0.02857142857142857,
+        "Specificity": 0.9714285714285714,
+        "NPV": 0.8947368421052632
+      },
+      "avg_latency": 5.3727573277760206,
+      "avg_tokens": 484.7361111111111
+    },
+    "few_shot": {
+      "confusion_matrix": {
+        "tp": 27,
+        "fp": 0,
+        "fn": 1,
+        "tn": 36
+      },
+      "metrics": {
+        "Precision": 1.0,
+        "Recall": 0.9642857142857143,
+        "F1": 0.9818181818181818,
+        "Accuracy": 0.984375,
+        "FPR": 0.0,
+        "Specificity": 1.0,
+        "NPV": 0.972972972972973
+      },
+      "avg_latency": 5.3727573277760206,
+      "avg_tokens": 754.1111111111111
+    },
+    "chain_of_thought": {
+      "confusion_matrix": {
+        "tp": 20,
+        "fp": 0,
+        "fn": 11,
+        "tn": 36
+      },
+      "metrics": {
+        "Precision": 1.0,
+        "Recall": 0.6451612903225806,
+        "F1": 0.7843137254901961,
+        "Accuracy": 0.835820895522388,
+        "FPR": 0.0,
+        "Specificity": 1.0,
+        "NPV": 0.7659574468085106
+      },
+      "avg_latency": 5.3727573277760206,
+      "avg_tokens": 772.8055555555555
+    }
+  },
+  "ground_truth_distribution": {
+    "true_positive": 36,
+    "false_positive": 36
+  },
+  "analysis": {
+    "mcnemar_test": {
+      "zero_shot_vs_few_shot": {
+        "p_value": 0.7266,
+        "significant": false,
+        "interpretation": "No statistically significant difference"
+      },
+      "zero_shot_vs_chain_of_thought": {
+        "p_value": 0.0265,
+        "significant": true,
+        "interpretation": "Zero-shot significantly outperforms CoT"
+      },
+      "few_shot_vs_chain_of_thought": {
+        "p_value": 0.0704,
+        "significant": false,
+        "interpretation": "Borderline significance, trend toward few-shot superiority"
+      }
+    }
+  }
+}

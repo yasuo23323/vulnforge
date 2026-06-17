@@ -1,0 +1,74 @@
+{
+  "dataset_size": 72,
+  "ground_truth_distribution": {
+    "true_positive": 36,
+    "false_positive": 36
+  },
+  "vulnerability_types": [
+    "command_injection",
+    "open_redirect",
+    "path_traversal",
+    "sql_injection",
+    "ssrf",
+    "xss"
+  ],
+  "results": {
+    "zero_shot": {
+      "confusion_matrix": {
+        "tp": 31,
+        "fp": 1,
+        "fn": 4,
+        "tn": 35
+      },
+      "metrics": {
+        "Precision": 0.96875,
+        "Recall": 0.8857142857142857,
+        "F1": 0.9253731343283582,
+        "Accuracy": 0.9295774647887324,
+        "FPR": 0.027777777777777776,
+        "Specificity": 0.9722222222222222,
+        "NPV": 0.8974358974358975
+      },
+      "avg_latency": 6.092211144445577,
+      "avg_tokens": 477.2916666666667
+    },
+    "few_shot": {
+      "confusion_matrix": {
+        "tp": 25,
+        "fp": 0,
+        "fn": 1,
+        "tn": 36
+      },
+      "metrics": {
+        "Precision": 1.0,
+        "Recall": 0.9615384615384616,
+        "F1": 0.9803921568627451,
+        "Accuracy": 0.9838709677419355,
+        "FPR": 0.0,
+        "Specificity": 1.0,
+        "NPV": 0.972972972972973
+      },
+      "avg_latency": 6.092211144445577,
+      "avg_tokens": 751.875
+    },
+    "chain_of_thought": {
+      "confusion_matrix": {
+        "tp": 18,
+        "fp": 0,
+        "fn": 11,
+        "tn": 36
+      },
+      "metrics": {
+        "Precision": 1.0,
+        "Recall": 0.6206896551724138,
+        "F1": 0.7659574468085107,
+        "Accuracy": 0.8307692307692308,
+        "FPR": 0.0,
+        "Specificity": 1.0,
+        "NPV": 0.7659574468085106
+      },
+      "avg_latency": 6.092211144445577,
+      "avg_tokens": 775.6388888888889
+    }
+  }
+}

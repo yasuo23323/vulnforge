@@ -1,0 +1,69 @@
+﻿# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+dist/
+build/
+.eggs/
+*.egg
+.venv/
+venv/
+env/
+
+# Environment
+.env
+backend/.env
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+*~
+
+# Node
+node_modules/
+frontend/dist/
+frontend/build/
+
+# Docker
+.docker/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Database
+*.db
+*.sqlite3
+
+# Logs
+*.log
+
+# Jupyter
+.ipynb_checkpoints/
+
+# Dev artifacts
+sqlmap_*/
+scripts/experiment/*.txt
+scripts/experiment/*.jsonl
+dvwa_cookies.txt
+ffuf_*.txt
+ffuf_*.json
+nuclei_*.jsonl
+py.cmd
+vulnforge_env.ps1
+gen_*.py
+scan_*.py
+fix_*.py
+probe_*.py
+run_*.py
+review_*.py
+版本迭代/
+
+# Personal docs
+*.docx
+项目介绍_中英双语.md
+
+# Large files
+tools/

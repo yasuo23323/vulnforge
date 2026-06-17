@@ -1,0 +1,17 @@
+{
+  "juice-shop": {
+    "dalfox": [],
+    "ffuf": [],
+    "nuclei": []
+  },
+  "dvwa": {
+    "dalfox": [],
+    "ffuf": [],
+    "nuclei": []
+  },
+  "webgoat": {
+    "dalfox": [],
+    "ffuf": [],
+    "nuclei": []
+  }
+}
