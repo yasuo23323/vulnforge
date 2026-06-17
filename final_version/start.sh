@@ -1,35 +1,54 @@
 #!/bin/bash
+
+# ========================================
+#  VulnForge - One-Click Setup & Launch
+# ========================================
+
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+cd "$SCRIPT_DIR/.."  # Go to project root
+
+echo ""
+echo "========================================"
+echo "  VulnForge - Auto Setup"
+echo "========================================"
+echo ""
+
+# Step 1: Create .env if missing
 if [ ! -f .env ]; then
+    echo "[1/4] Creating .env from example..."
     cp final_version/.env.example .env
 fi
 
-echo "========================================"
-echo "  VulnForge - Setup & Launch"
-echo "========================================"
-echo ""
+# Step 2: Check API key
 current_key=$(grep "^OPENAI_API_KEY=" .env | cut -d= -f2)
 if [ "$current_key" = "sk-your-api-key-here" ] || [ -z "$current_key" ]; then
-    echo "Enter your DeepSeek API Key (paste and press Enter):"
+    echo "[2/4] Enter your DeepSeek API Key (paste and press Enter):"
     read -r api_key
     if [ -n "$api_key" ]; then
-        # Replace API key safely (handle special chars with | delimiter)
-        sed -i "s|^OPENAI_API_KEY=.*|OPENAI_API_KEY=$api_key|" .env
-        echo "API Key saved!"
-    else
-        echo "No key entered. Edit .env manually later."
+        # Escape special chars in API key for sed
+        api_key_escaped=$(printf '%s\n' "$api_key" | sed 's/[\/&]/\\&/g')
+        sed -i "s|^OPENAI_API_KEY=.*|OPENAI_API_KEY=$api_key_escaped|" .env
+        echo "  API Key saved!"
     fi
 else
-    echo "API Key already configured."
+    echo "[2/4] API Key already configured."
 fi
-echo ""
-echo "Starting VulnForge..."
-docker compose -f final_version/docker-compose.yml up -d 2>&1
-echo ""
-echo ""
-echo "========================================"
-echo "  Permission denied? Run with sudo:"
-echo "  sudo docker compose -f final_version/docker-compose.yml up -d"
-echo "========================================"
-echo ""
-echo "Done! Open http://YOUR_SERVER_IP:3000"
 
+# Step 3: Copy .env to final_version/ for Docker
+cp .env final_version/.env 2>/dev/null
+echo "[3/4] Environment ready."
+
+# Step 4: Start Docker
+echo "[4/4] Starting VulnForge..."
+if docker compose -f final_version/docker-compose.yml up -d 2>/dev/null; then
+    echo ""
+    echo "  VulnForge is running!"
+    echo "  Open http://YOUR_SERVER_IP:3000 in your browser"
+else
+    echo "  Trying with sudo..."
+    sudo docker compose -f final_version/docker-compose.yml up -d
+    echo ""
+    echo "  VulnForge is running!"
+fi
+
+echo "========================================"
