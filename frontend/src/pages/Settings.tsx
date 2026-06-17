@@ -81,7 +81,7 @@ const Settings: React.FC = () => {
 
         <div style={{ marginTop: 16, padding: 12, background: "#fffbe6", borderRadius: 6 }}>
           <Text type="secondary">
-            To update LLM settings, edit the <Text code>backend/.env</Text> file directly and restart the server.
+            To update LLM settings, edit the <Text code>.env</Text> file in the project root directory and restart (<Text code>bash final_version/start.sh</Text>).
           </Text>
         </div>
       </Card>

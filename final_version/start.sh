@@ -1,4 +1,4 @@
-#!/bin/bash
+﻿#!/bin/bash
 
 # ========================================
 #  VulnForge - One-Click Setup & Launch
@@ -35,12 +35,12 @@ else
 fi
 
 # Step 3: Copy .env to final_version/ for Docker
-cp .env final_version/.env 2>/dev/null
+cp .env final_version/.env
 echo "[3/4] Environment ready."
 
 # Step 4: Start Docker
 echo "[4/4] Starting VulnForge..."
-if docker compose -f final_version/docker-compose.yml up -d 2>/dev/null; then
+if docker compose -f final_version/docker-compose.yml up -d; then
     echo ""
     echo "  VulnForge is running!"
     echo "  Open http://YOUR_SERVER_IP:3000 in your browser"
