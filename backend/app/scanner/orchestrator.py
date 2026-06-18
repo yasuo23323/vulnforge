@@ -35,7 +35,7 @@ class ScannerOrchestrator:
         results = {}
         for name, coro in tasks.items():
             try:
-                results[name] = await asyncio.wait_for(coro, timeout=120)
+                results[name] = await asyncio.wait_for(coro, timeout=300)
             except asyncio.TimeoutError:
                 results[name] = []
                 print(f"Scanner {name} timed out")
@@ -66,7 +66,7 @@ class ScannerOrchestrator:
         process = await asyncio.create_subprocess_exec(
             *cmd, stdin=stdin_pipe, stdout=subprocess.PIPE, stderr=subprocess.PIPE
         )
-        stdout, stderr = await asyncio.wait_for(process.communicate(input=stdin_data), timeout=120)
+        stdout, stderr = await asyncio.wait_for(process.communicate(input=stdin_data), timeout=300)
         raw_output = stdout.decode("utf-8", errors="replace")
         return parser(raw_output, target_url)
 

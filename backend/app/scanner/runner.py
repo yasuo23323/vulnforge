@@ -26,7 +26,7 @@ async def run_scan_task(scan_id: str | UUID) -> dict:
             orch = ScannerOrchestrator()
             scan_results = await asyncio.wait_for(
                 orch.run_scanners(task.target_url, task.scanners, **(task.parameters or {})),
-                timeout=180
+                timeout=300
             )
 
             for scanner_name, results in scan_results.items():
