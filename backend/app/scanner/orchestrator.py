@@ -91,12 +91,12 @@ class ScannerOrchestrator:
                         break
                 return (["docker", "run", "--rm", "--network", "vulnforge_default",
                         "projectdiscovery/nuclei", "-u", mapped, "-j", "-silent",
-                        "-timeout", "10", "-retries", "2", "-severity", "critical,high,medium,low"]
+                        "-timeout", "15", "-retries", "2", "-esc", "-severity", "critical,high,medium,low,info"]
                         + header)
             else:
                 return (["docker", "run", "--rm",
                         "projectdiscovery/nuclei", "-u", mapped, "-j", "-silent",
-                        "-timeout", "10", "-retries", "2", "-severity", "critical,high,medium,low"]
+                        "-timeout", "15", "-retries", "2", "-esc", "-severity", "critical,high,medium,low,info"]
                         + header)
 
         if scanner_name == "sqlmap":
