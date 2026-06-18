@@ -50,9 +50,9 @@ async def run_scan_task(scan_id: str | UUID) -> dict:
                     findings_count += 1
 
             session.sync_session.expire_on_commit = False
-        await session.commit()
+            await session.commit()
 
-        # Auto-analyse all findings with LLM (concurrent, rate-limited)
+            # Auto-analyse all findings with LLM (concurrent, rate-limited)
             if new_findings and settings.OPENAI_API_KEY:
                 from app.llm.client import OpenAIClient
                 from app.llm.strategies import LLMAnalyzer, AnalysisStrategy
@@ -74,7 +74,7 @@ async def run_scan_task(scan_id: str | UUID) -> dict:
                                     db.add(analysis)
                                     await db.commit()
                             except Exception as _llm_err:
-                            print(f"[LLM] Error analyzing finding {getattr(finding, \"id\", \"?\")}: {_llm_err}")
+                                print(f"[LLM] Error analyzing finding {getattr(finding, \"id\", \"?\")}: {_llm_err}")
 
                 await asyncio.gather(*[_analyze_one(f) for f in new_findings], return_exceptions=True)
 
@@ -96,4 +96,5 @@ async def run_scan_task(scan_id: str | UUID) -> dict:
             task.error_message = str(e)[:500]
             await session.commit()
             return {"error": str(e), "status": "failed"}
+
 
