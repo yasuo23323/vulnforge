@@ -7,10 +7,11 @@ from sqlalchemy import select
 from app.database import async_session_factory
 from app.models import ScanTask, ScanStatus, Finding
 from app.scanner.orchestrator import ScannerOrchestrator
+from app.config import settings
 
 
 async def run_scan_task(scan_id: str | UUID) -> dict:
-    """Execute a scan task with 180s timeout."""
+    """Execute a scan task with 300s timeout, auto-analyse findings after scan."""
     async with async_session_factory() as session:
         result = await session.execute(select(ScanTask).where(ScanTask.id == scan_id))
         task = result.scalar_one_or_none()
@@ -29,6 +30,7 @@ async def run_scan_task(scan_id: str | UUID) -> dict:
                 timeout=300
             )
 
+            new_findings = []
             for scanner_name, results in scan_results.items():
                 for sr in results:
                     finding = Finding(
@@ -44,7 +46,36 @@ async def run_scan_task(scan_id: str | UUID) -> dict:
                         extra_data=sr.extra_data,
                     )
                     session.add(finding)
+                    new_findings.append(finding)
                     findings_count += 1
+
+            await session.commit()
+
+            # Auto-analyse all findings with LLM (concurrent, rate-limited)
+            if new_findings and settings.OPENAI_API_KEY:
+                from app.llm.client import OpenAIClient
+                from app.llm.strategies import LLMAnalyzer, AnalysisStrategy
+
+                client = OpenAIClient(
+                    settings.LLM_DEFAULT_MODEL,
+                    settings.OPENAI_API_KEY,
+                    base_url=settings.OPENAI_BASE_URL
+                )
+                analyzer = LLMAnalyzer(client)
+                sem = asyncio.Semaphore(5)
+
+                async def _analyze_one(finding):
+                    async with sem:
+                        for strategy in [AnalysisStrategy.ZERO_SHOT, AnalysisStrategy.FEW_SHOT, AnalysisStrategy.CHAIN_OF_THOUGHT]:
+                            try:
+                                analysis = await analyzer.analyze_finding(finding, strategy)
+                                async with async_session_factory() as db:
+                                    db.add(analysis)
+                                    await db.commit()
+                            except:
+                                pass
+
+                await asyncio.gather(*[_analyze_one(f) for f in new_findings], return_exceptions=True)
 
             task.status = ScanStatus.COMPLETED
             task.completed_at = datetime.utcnow()
@@ -54,7 +85,7 @@ async def run_scan_task(scan_id: str | UUID) -> dict:
         except asyncio.TimeoutError:
             task.status = ScanStatus.FAILED
             task.completed_at = datetime.utcnow()
-            task.error_message = "Scan timed out after 180s"
+            task.error_message = "Scan timed out after 300s"
             await session.commit()
             return {"error": "Timeout", "status": "failed"}
 
@@ -64,4 +95,3 @@ async def run_scan_task(scan_id: str | UUID) -> dict:
             task.error_message = str(e)[:500]
             await session.commit()
             return {"error": str(e), "status": "failed"}
-
