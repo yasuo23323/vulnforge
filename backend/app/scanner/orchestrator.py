@@ -1,4 +1,4 @@
-﻿import asyncio
+import asyncio
 import subprocess
 import sys
 import os
@@ -114,3 +114,4 @@ class ScannerOrchestrator:
                     + header)
 
         return None
+

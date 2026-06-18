@@ -1,4 +1,4 @@
-﻿import asyncio
+import asyncio
 from datetime import datetime
 from uuid import UUID
 
@@ -74,7 +74,7 @@ async def run_scan_task(scan_id: str | UUID) -> dict:
                                     db.add(analysis)
                                     await db.commit()
                             except Exception as _llm_err:
-                                print(f"[LLM] Error analyzing finding {getattr(finding, \"id\", \"?\")}: {_llm_err}")
+                                print(f"[LLM] Error: {_llm_err}")
 
                 await asyncio.gather(*[_analyze_one(f) for f in new_findings], return_exceptions=True)
 
