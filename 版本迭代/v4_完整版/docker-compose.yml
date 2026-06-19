@@ -1,0 +1,73 @@
+services:
+  postgres:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_USER: vulnforge
+      POSTGRES_PASSWORD: vulnforge
+      POSTGRES_DB: vulnforge
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U vulnforge"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  redis:
+    image: redis:7-alpine
+    ports:
+      - "6379:6379"
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  backend:
+    build: ./backend
+    ports:
+      - "8000:8000"
+    environment:
+      POSTGRES_DATABASE_URL: postgresql+asyncpg://vulnforge:vulnforge@postgres:5432/vulnforge
+      DATABASE_TYPE: postgres
+      REDIS_URL: redis://redis:6379/0
+      CELERY_BROKER_URL: redis://redis:6379/1
+      CELERY_RESULT_BACKEND: redis://redis:6379/1
+      DEBUG: "true"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    volumes:
+      - ./backend:/app
+
+  frontend:
+    build: ./frontend
+    ports:
+      - "3000:80"
+    depends_on:
+      - backend
+
+  juice-shop:
+    image: bkimminich/juice-shop:latest
+    ports:
+      - "3001:3000"
+    restart: unless-stopped
+
+  dvwa:
+    image: vulnerables/web-dvwa:latest
+    ports:
+      - "3002:80"
+    restart: unless-stopped
+
+  webgoat:
+    image: webgoat/webgoat:latest
+    ports:
+      - "3003:8080"
+    restart: unless-stopped
+
+volumes:
+  postgres_data:
