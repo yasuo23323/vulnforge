@@ -1,4 +1,4 @@
-﻿import asyncio
+import asyncio
 import subprocess
 import sys
 import os
@@ -22,29 +22,55 @@ class ScannerOrchestrator:
         self._scanners[scanner.name] = scanner
 
     async def _discover_urls(self, target_url: str) -> list[str]:
-        """Crawl the target homepage to discover URLs for deeper scanning."""
+        """Discover URLs: crawl homepage + probe common API paths."""
         discovered = {target_url}
+        parsed = urlparse(target_url)
+        base = f"{parsed.scheme}://{parsed.netloc}"
+
+        # Step 1: Crawl homepage for <a href> and <form action>
         try:
             async with httpx.AsyncClient(timeout=10, verify=False) as client:
                 resp = await client.get(target_url, headers={"User-Agent": "Mozilla/5.0"})
                 html = resp.text
-                base = target_url.rstrip("/")
-                # Extract <a href="...">
                 for m in re.finditer(r'href=["'"'"']([^"'"'"']+)["'"'"']', html):
                     link = m.group(1)
                     if link.startswith("#") or link.startswith("javascript:"):
                         continue
                     full = urljoin(target_url, link)
-                    if base in full:
+                    if base.rstrip("/") in full:
                         discovered.add(full.split("#")[0])
-                # Extract <form action="...">
                 for m in re.finditer(r'action=["'"'"']([^"'"'"']+)["'"'"']', html):
                     link = m.group(1)
                     full = urljoin(target_url, link)
-                    if base in full:
+                    if base.rstrip("/") in full:
                         discovered.add(full.split("#")[0])
         except:
             pass
+
+        # Step 2: Probe common API/endpoint paths (for SPA apps like Juice Shop)
+        common_paths = [
+            "/api/Products", "/api/Users", "/api/Feedbacks",
+            "/api/Challenges", "/api/BasketItems", "/api/Orders",
+            "/api/", "/swagger.json", "/api-docs/",
+            "/robots.txt", "/sitemap.xml", "/.well-known/security.txt",
+            "/search", "/login", "/admin", "/assets/",
+        ]
+        async with httpx.AsyncClient(timeout=5, verify=False) as client:
+            for path in common_paths:
+                try:
+                    full = f"{base.rstrip('/')}{path}"
+                    resp = await client.get(full, headers={"User-Agent": "Mozilla/5.0"})
+                    if resp.status_code in (200, 401, 403, 500):
+                        discovered.add(full)
+                except:
+                    pass
+
+        # Step 3: For discovered API endpoints, add ?id=1 variant for sqlmap
+        api_urls = list(discovered)
+        for url in api_urls:
+            if "?" not in url and ("/api/" in url):
+                discovered.add(f"{url}?id=1")
+
         return list(discovered)
 
     async def run_scanners(
