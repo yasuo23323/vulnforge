@@ -1,4 +1,4 @@
-﻿# Python
+# Python
 __pycache__/
 *.py[cod]
 *.egg-info/
@@ -59,11 +59,15 @@ vulnforge_env.ps1
 /probe_*.py
 /run_*.py
 /review_*.py
-版本迭代/
+????/
 
 # Personal docs
 *.docx
-项目介绍_中英双语.md
+????_????.md
 
 # Large files
 tools/
+
+# Windows artifacts (not needed on Linux)
+*.bat
+scripts/
