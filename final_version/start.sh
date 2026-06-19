@@ -14,6 +14,13 @@ echo "[1/5] Configuring Docker DNS..."
 echo '{"ipv6":false,"dns":["8.8.8.8"]}' | sudo tee /etc/docker/daemon.json > /dev/null 2>/dev/null || true
 sudo systemctl restart docker 2>/dev/null || true
 echo "[1/5] Docker ready"
+# Fix system DNS for Docker daemon
+chattr -i /etc/resolv.conf 2>/dev/null || true
+echo "nameserver 8.8.8.8" > /etc/resolv.conf
+chattr +i /etc/resolv.conf 2>/dev/null || true
+systemctl restart docker 2>/dev/null || true
+sleep 3
+echo "[1/5] System DNS: 8.8.8.8"
 
 # Step 2: Create .env if missing
 if [ ! -f .env ]; then
