@@ -11,7 +11,6 @@ RUN curl -Lf "https://github.com/ffuf/ffuf/releases/download/v2.1.0/ffuf_2.1.0_l
     && tar xzf /tmp/ffuf.tar.gz --strip-components=1 -C /usr/local/bin/ ffuf \\
     && rm /tmp/ffuf.tar.gz \
     && chmod +x /usr/local/bin/ffuf || echo "[WARN] ffuf download failed"
-    && rm /tmp/ffuf.tar.gz
 
 # Install dalfox binary (Docker image entrypoint broken)
 RUN curl -Lf "https://github.com/hahwul/dalfox/releases/latest/download/dalfox_linux_amd64.tar.gz" -o /tmp/dalfox.tar.gz \
