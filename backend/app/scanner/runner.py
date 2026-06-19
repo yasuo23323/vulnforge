@@ -63,7 +63,7 @@ async def run_scan_task(scan_id: str | UUID) -> dict:
                     base_url=settings.OPENAI_BASE_URL
                 )
                 analyzer = LLMAnalyzer(client)
-                sem = asyncio.Semaphore(5)
+                sem = asyncio.Semaphore(10)
 
                 async def _analyze_one(finding):
                     async with sem:

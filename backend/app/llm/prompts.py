@@ -1,4 +1,4 @@
-﻿from app.llm.client import BaseLLMClient, LLMResponse
+from app.llm.client import BaseLLMClient, LLMResponse
 from app.models.finding import Finding
 from typing import Optional
 
