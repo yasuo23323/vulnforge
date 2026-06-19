@@ -147,12 +147,7 @@ class ScannerOrchestrator:
 
         stdin_data = None
         stdin_pipe = None
-        if scanner_name == "ffuf":
-            wordlist_path = os.path.join(os.path.dirname(__file__), "common.txt")
-            if os.path.exists(wordlist_path):
-                with open(wordlist_path, "rb") as f:
-                    stdin_data = f.read()
-            stdin_pipe = subprocess.PIPE
+        wordlist_path = os.path.join(os.path.dirname(__file__), "common.txt")
 
         process = await asyncio.create_subprocess_exec(
             *cmd, stdin=stdin_pipe, stdout=subprocess.PIPE, stderr=subprocess.PIPE
@@ -196,12 +191,12 @@ class ScannerOrchestrator:
                     + sqlmap_cookie)
 
         if scanner_name == "dalfox":
-            return (["docker", "run", "--rm", "hahwul/dalfox", "url", "--url", target_url, "--silence"]
+            return (["docker", "run", "--rm", "hahwul/dalfox", "dalfox", "url", "--url", target_url, "--silence"]
                     + header)
 
         if scanner_name == "ffuf":
-            return (["docker", "run", "--rm", "-i", "ffuf/ffuf",
-                    "-u", f"{target_url}/FUZZ", "-w", "-", "-t", "10", "-ac", "-s"]
+            wordlist_path = os.path.join(os.path.dirname(__file__), "common.txt")
+            return (["ffuf", "-u", f"{target_url}/FUZZ", "-w", wordlist_path, "-t", "10", "-ac", "-s"]
                     + header)
 
         return None
