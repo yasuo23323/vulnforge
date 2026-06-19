@@ -191,7 +191,7 @@ class ScannerOrchestrator:
                     + sqlmap_cookie)
 
         if scanner_name == "dalfox":
-            return (["dalfox", "url", "--url", target_url, "--silence"]
+            return (["docker", "run", "--rm", "--entrypoint", "/dalfox", "hahwul/dalfox", "url", "--url", target_url, "--silence"]
                     + header)
 
         if scanner_name == "ffuf":
@@ -200,4 +200,5 @@ class ScannerOrchestrator:
                     + header)
 
         return None
+
 

@@ -1,4 +1,4 @@
-FROM python:3.12-slim
+﻿FROM python:3.12-slim
 
 WORKDIR /app
 
@@ -7,7 +7,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     && rm -rf /var/lib/apt/lists/*
 
 # Install ffuf binary (Docker image not available)
-RUN curl -Lf "https://github.com/ffuf/ffuf/releases/latest/download/ffuf_linux_amd64.tar.gz" -o /tmp/ffuf.tar.gz \
+RUN curl -Lf "https://github.com/ffuf/ffuf/releases/download/v2.1.0/ffuf_2.1.0_linux_amd64.tar.gz" -o /tmp/ffuf.tar.gz \
     && tar xzf /tmp/ffuf.tar.gz --strip-components=1 -C /usr/local/bin/ ffuf \\
     && rm /tmp/ffuf.tar.gz \
     && chmod +x /usr/local/bin/ffuf || echo "[WARN] ffuf download failed"
@@ -32,5 +32,6 @@ RUN pip install --no-cache-dir --prefer-binary -r requirements.txt
 COPY . .
 EXPOSE 8000
 CMD ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000"]
+
 
 
