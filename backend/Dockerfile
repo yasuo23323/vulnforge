@@ -1,4 +1,4 @@
-﻿FROM python:3.12-slim
+FROM python:3.12-slim
 
 WORKDIR /app
 
@@ -6,18 +6,13 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     gcc curl \
     && rm -rf /var/lib/apt/lists/*
 
-# Install ffuf binary (Docker image not available)
+# Install ffuf binary
 RUN curl -Lf "https://github.com/ffuf/ffuf/releases/download/v2.1.0/ffuf_2.1.0_linux_amd64.tar.gz" -o /tmp/ffuf.tar.gz \
-    && tar xzf /tmp/ffuf.tar.gz --strip-components=1 -C /usr/local/bin/ ffuf \\
+    && tar xzf /tmp/ffuf.tar.gz --strip-components=1 -C /usr/local/bin/ ffuf \
     && rm /tmp/ffuf.tar.gz \
     && chmod +x /usr/local/bin/ffuf || echo "[WARN] ffuf download failed"
 
-# Install dalfox binary (Docker image entrypoint broken)
-RUN curl -Lf "https://github.com/hahwul/dalfox/releases/latest/download/dalfox_linux_amd64.tar.gz" -o /tmp/dalfox.tar.gz \
-    && tar xzf /tmp/dalfox.tar.gz --strip-components=1 -C /usr/local/bin/ dalfox \
-    && chmod +x /usr/local/bin/dalfox || echo "[WARN] dalfox download failed"
-
-# Install Docker CLI binary (for running scanner tools in Docker containers)
+# Install Docker CLI binary
 RUN curl -fsSL "https://download.docker.com/linux/static/stable/x86_64/docker-27.5.1.tgz" -o /tmp/docker.tgz \
     && tar xzf /tmp/docker.tgz -C /tmp/ \
     && mv /tmp/docker/docker /usr/local/bin/ \
@@ -31,6 +26,3 @@ RUN pip install --no-cache-dir --prefer-binary -r requirements.txt
 COPY . .
 EXPOSE 8000
 CMD ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000"]
-
-
-
