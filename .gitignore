@@ -71,3 +71,9 @@ tools/
 # Windows artifacts (not needed on Linux)
 *.bat
 scripts/
+
+# Project artifacts (not needed by end users)
+scripts/
+????/
+*.bat
+*.docx
