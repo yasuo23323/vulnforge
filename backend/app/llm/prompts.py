@@ -1,4 +1,4 @@
-from app.llm.client import BaseLLMClient, LLMResponse
+﻿from app.llm.client import BaseLLMClient, LLMResponse
 from app.models.finding import Finding
 from typing import Optional
 
@@ -12,6 +12,14 @@ and determine whether each finding is a TRUE POSITIVE or FALSE POSITIVE.
 
 A true positive means the vulnerability genuinely exists and is exploitable.
 A false positive means the scanner incorrectly flagged benign behavior.
+
+**Confidence scale (use the FULL range, not just 0.9-1.0):**
+0.0-0.2: Pure guess, no real evidence
+0.2-0.4: Weak signal, mostly inconclusive
+0.4-0.6: Moderate evidence, plausible but uncertain
+0.6-0.8: Strong evidence, likely correct
+0.8-0.95: Very strong evidence, nearly certain
+0.95-1.0: Absolutely certain, undeniable evidence
 
 Analyze carefully:
 1. Is the evidence in the response consistent with the claimed vulnerability type?
@@ -46,36 +54,38 @@ Request:
 Response:
 {finding.response_data or "(not captured)"}
 
-Is this a true positive or false positive? Respond in JSON format."""
+Is this a true positive or false positive? Respond in JSON format. Use the full confidence scale."""
         return PromptBuilder.SYSTEM_PROMPT, user_prompt
 
     @staticmethod
     def build_few_shot(finding: Finding) -> tuple[str, str]:
         """Build system and user prompts for few-shot analysis with examples."""
-        examples = """Here are three annotated examples to guide your analysis:
+        examples = """Here are annotated examples covering different confidence levels:
 
-Example 1 (TRUE POSITIVE - SQL Injection):
-- Scanner: sqlmap
-- URL: http://testapp.com/products?id=1
-- Evidence: Parameter: id (GET). Technique: Error-based. Title: MySQL >= 5.0 error-based.
-- Analysis Result: The response contains a MySQL error message with the injected payload reflected, confirming SQL injection.
-- Verdict: true_positive (confidence: 0.95)
+Example 1 (TRUE POSITIVE - SQL Injection, very confident):
+- Scanner: sqlmap | URL: http://testapp.com/products?id=1
+- Evidence: Parameter id (GET) error-based SQLi. Response contains MySQL error with injected payload.
+- Verdict: true_positive (confidence: 0.97) - Clear SQL syntax error confirming injection
 
-Example 2 (FALSE POSITIVE - Reflected XSS):
-- Scanner: dalfox
-- URL: http://testapp.com/search?q=test
-- Evidence: Parameter q reflected in response but properly HTML-encoded as &lt;script&gt;
-- Analysis Result: The input is reflected, but the application properly encodes it. No XSS vector is possible.
-- Verdict: false_positive (confidence: 0.90)
+Example 2 (FALSE POSITIVE - Technology info, moderately confident):
+- Scanner: nuclei | URL: http://testapp.com/
+- Evidence: Response header has `Server: Apache/2.4.41` and `X-Powered-By: PHP/7.4`
+- Verdict: false_positive (confidence: 0.85) - Standard server headers, informational only, not a vuln
 
-Example 3 (TRUE POSITIVE - Reflected XSS):
-- Scanner: nuclei
-- URL: http://testapp.com/error?msg=<script>alert(1)</script>
-- Evidence: Response contains unencoded <script>alert(1)</script> in the body
-- Analysis Result: Input is reflected without sanitization, allowing arbitrary JS execution.
-- Verdict: true_positive (confidence: 0.98)"""
+Example 3 (FALSE POSITIVE - phpinfo exposure, uncertain):
+- Scanner: nuclei | URL: http://testapp.com/phpinfo.php
+- Evidence: 200 OK response with `PHP Version 7.4.30`. No sensitive data visible in snippet.
+- Verdict: false_positive (confidence: 0.55) - Possible minor info disclosure but insufficient evidence of harm
 
-        user_prompt = f"""{examples}
+Example 4 (UNCERTAIN - Weak XSS evidence):
+- Scanner: dalfox | URL: http://testapp.com/search?q=test
+- Evidence: Input reflected in response but no unencoded script tags or event handlers observed.
+- Verdict: uncertain (confidence: 0.35) - Reflection exists but no exploitation vector confirmed
+
+Example 5 (TRUE POSITIVE - Missing security headers, moderately confident):
+- Scanner: nuclei | URL: http://testapp.com/
+- Evidence: Missing X-Frame-Options, X-Content-Type-Options, CSP headers
+- Verdict: true_positive (confidence: 0.72) - Real missing headers but low direct exploitation risk
 
 Now analyze this finding:
 
@@ -94,7 +104,7 @@ Request:
 Response:
 {finding.response_data or "(not captured)"}
 
-Is this a true positive or false positive? Respond in JSON format."""
+Is this a true positive or false positive? Respond in JSON format. Use the full confidence scale."""
         return PromptBuilder.SYSTEM_PROMPT, user_prompt
 
     @staticmethod
@@ -125,5 +135,5 @@ Please reason step-by-step:
 4. Could normal application behavior produce similar patterns?
 5. Is there evidence of actual exploitation impact?
 
-After your reasoning, provide your final verdict in JSON format."""
+After your reasoning, provide your final verdict in JSON format. Use the full confidence scale."""
         return PromptBuilder.SYSTEM_PROMPT, user_prompt
