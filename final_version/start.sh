@@ -12,7 +12,7 @@ echo ""
 # Step 1: Configure Docker for IPv4-only
 if [ ! -f /etc/docker/daemon.json ]; then
     echo "[1/5] Configuring Docker for IPv4..."
-    echo '{"ipv6":false}' | sudo tee /etc/docker/daemon.json > /dev/null 2>/dev/null || true
+    echo '{"ipv6":false,"dns":["8.8.8.8","1.1.1.1"]}' | sudo tee /etc/docker/daemon.json > /dev/null 2>/dev/null || true
     sudo systemctl restart docker 2>/dev/null || true
 else
     echo "[1/5] Docker already configured."
