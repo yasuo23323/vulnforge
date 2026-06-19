@@ -1,8 +1,11 @@
-import asyncio
+﻿import asyncio
 import subprocess
 import sys
 import os
+import re
+from urllib.parse import urlparse, urljoin
 from typing import Optional
+import httpx
 from app.scanner.base import BaseScanner, ScanResult
 from app.scanner.parsers import SCANNER_PARSERS
 from app.config import settings
@@ -18,6 +21,32 @@ class ScannerOrchestrator:
     def register_scanner(self, scanner: BaseScanner):
         self._scanners[scanner.name] = scanner
 
+    async def _discover_urls(self, target_url: str) -> list[str]:
+        """Crawl the target homepage to discover URLs for deeper scanning."""
+        discovered = {target_url}
+        try:
+            async with httpx.AsyncClient(timeout=10, verify=False) as client:
+                resp = await client.get(target_url, headers={"User-Agent": "Mozilla/5.0"})
+                html = resp.text
+                base = target_url.rstrip("/")
+                # Extract <a href="...">
+                for m in re.finditer(r'href=["'"'"']([^"'"'"']+)["'"'"']', html):
+                    link = m.group(1)
+                    if link.startswith("#") or link.startswith("javascript:"):
+                        continue
+                    full = urljoin(target_url, link)
+                    if base in full:
+                        discovered.add(full.split("#")[0])
+                # Extract <form action="...">
+                for m in re.finditer(r'action=["'"'"']([^"'"'"']+)["'"'"']', html):
+                    link = m.group(1)
+                    full = urljoin(target_url, link)
+                    if base in full:
+                        discovered.add(full.split("#")[0])
+        except:
+            pass
+        return list(discovered)
+
     async def run_scanners(
         self,
         target_url: str,
@@ -26,9 +55,17 @@ class ScannerOrchestrator:
     ) -> dict[str, list[ScanResult]]:
         names = scanner_names or list(self._scanners.keys())
         tasks = {}
+
+        # Discover URLs first (for sqlmap/dalfox multi-url scanning)
+        discovered = await self._discover_urls(target_url)
+        print(f"[Discovery] Found {len(discovered)} URLs on {target_url}")
+
         for name in names:
             if name in self._scanners:
                 tasks[name] = self._scanners[name].scan(target_url, **kwargs)
+            elif name in ("sqlmap", "dalfox"):
+                # These scanners benefit from multi-URL scanning
+                tasks[name] = self._run_multi_url_scanner(name, target_url, discovered, **kwargs)
             else:
                 tasks[name] = self._run_scanner_subprocess(name, target_url, **kwargs)
 
@@ -43,6 +80,34 @@ class ScannerOrchestrator:
                 results[name] = []
                 print(f"Scanner {name} failed: {e}")
         return results
+
+    async def _run_multi_url_scanner(
+        self, scanner_name: str, target_url: str, urls: list[str], **kwargs
+    ) -> list[ScanResult]:
+        """Run sqlmap/dalfox against ALL discovered URLs, not just the homepage."""
+        parser = SCANNER_PARSERS.get(scanner_name)
+        if not parser:
+            raise ValueError(f"No parser for scanner: {scanner_name}")
+        all_results = []
+        for url in urls:
+            # Skip URLs without query params for sqlmap
+            if scanner_name == "sqlmap" and "?" not in url:
+                continue
+            cmd = self._build_command(scanner_name, url, **kwargs)
+            if not cmd:
+                continue
+            try:
+                stdin_data = None
+                stdin_pipe = None
+                process = await asyncio.create_subprocess_exec(
+                    *cmd, stdin=stdin_pipe, stdout=subprocess.PIPE, stderr=subprocess.PIPE
+                )
+                stdout, stderr = await asyncio.wait_for(process.communicate(input=stdin_data), timeout=120)
+                raw_output = stdout.decode("utf-8", errors="replace")
+                all_results.extend(parser(raw_output, url))
+            except:
+                pass
+        return all_results
 
     async def _run_scanner_subprocess(
         self, scanner_name: str, target_url: str, **kwargs
@@ -114,4 +179,3 @@ class ScannerOrchestrator:
                     + header)
 
         return None
-
