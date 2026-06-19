@@ -1,11 +1,11 @@
-import asyncio
+﻿import asyncio
 from datetime import datetime
 from uuid import UUID
 
 from sqlalchemy import select
 
 from app.database import async_session_factory
-from app.models import ScanTask, ScanStatus, Finding
+from app.models import ScanTask, ScanStatus, Finding, Severity
 from app.scanner.orchestrator import ScannerOrchestrator
 from app.config import settings
 
@@ -37,7 +37,7 @@ async def run_scan_task(scan_id: str | UUID) -> dict:
                         scan_task_id=task.id,
                         scanner_name=sr.scanner_name,
                         vulnerability_type=sr.vulnerability_type,
-                        severity=sr.severity,
+                        severity=Severity(sr.severity) if isinstance(sr.severity, str) else sr.severity,
                         url=sr.url,
                         request_data=sr.request_data,
                         response_data=sr.response_data,
