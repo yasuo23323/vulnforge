@@ -86,8 +86,9 @@ Example 5 (TRUE POSITIVE - Missing security headers, moderately confident):
 - Scanner: nuclei | URL: http://testapp.com/
 - Evidence: Missing X-Frame-Options, X-Content-Type-Options, CSP headers
 - Verdict: true_positive (confidence: 0.72) - Real missing headers but low direct exploitation risk
+"""
 
-Now analyze this finding:
+        user_prompt = f"""Now analyze this finding:
 
 Scanner: {finding.scanner_name}
 Vulnerability Type: {finding.vulnerability_type}
@@ -106,7 +107,6 @@ Response:
 
 Is this a true positive or false positive? Respond in JSON format. Use the full confidence scale."""
         return PromptBuilder.SYSTEM_PROMPT, user_prompt
-
     @staticmethod
     def build_chain_of_thought(finding: Finding) -> tuple[str, str]:
         """Build system and user prompts for Chain-of-Thought analysis."""
