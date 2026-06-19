@@ -8,7 +8,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 
 # Install ffuf binary (archive has NO directory wrapper)
 RUN curl -Lf "https://github.com/ffuf/ffuf/releases/download/v2.1.0/ffuf_2.1.0_linux_amd64.tar.gz" -o /tmp/ffuf.tar.gz \
-    && tar xzf /tmp/ffuf.tar.gz -C /usr/local/bin/ ffuf \
+    && cd /tmp && tar xzf ffuf.tar.gz && mv ffuf /usr/local/bin/ && rm -rf /tmp/ffuf* \
     && rm /tmp/ffuf.tar.gz \
     && chmod +x /usr/local/bin/ffuf || echo "[WARN] ffuf download failed"
 
