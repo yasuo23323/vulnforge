@@ -196,10 +196,12 @@ class ScannerOrchestrator:
 
         if scanner_name == "ffuf":
             wordlist_path = os.path.join(os.path.dirname(__file__), "common.txt")
-            return (["ffuf", "-u", f"{target_url}/FUZZ", "-w", wordlist_path, "-t", "10", "-ac", "-s"]
+            return (["ffuf", "-u", f"{target_url}/FUZZ", "-w", wordlist_path, "-t", "10", "-s"]
                     + header)
 
         return None
+
+
 
 
 
