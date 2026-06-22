@@ -8,17 +8,12 @@ echo "  VulnForge - Auto Setup"
 echo "========================================"
 echo ""
 
-# Step 1: Check and fix system DNS
-echo "[1/5] Checking system DNS..."
-if ! ping -c 1 github.com > /dev/null 2>&1; then
-    echo "  DNS not working - configuring 8.8.8.8..."
-    chattr -i /etc/resolv.conf 2>/dev/null || true
-    echo "nameserver 8.8.8.8" > /etc/resolv.conf
-    chattr +i /etc/resolv.conf 2>/dev/null || true
-    echo "  DNS fixed"
-else
-    echo "  DNS OK"
-fi
+# Step 1: Configure system DNS (required for Docker Hub)
+echo "[1/5] Configuring system DNS..."
+chattr -i /etc/resolv.conf 2>/dev/null || true
+echo "nameserver 8.8.8.8" > /etc/resolv.conf 2>/dev/null || true
+chattr +i /etc/resolv.conf 2>/dev/null || true
+echo "  DNS set to 8.8.8.8" 
 
 # Step 2: Configure Docker
 echo "[2/5] Configuring Docker..."
