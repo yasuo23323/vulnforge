@@ -11,26 +11,26 @@ echo ""
 
 # Step 1: Create .env if missing
 if [ ! -f .env ]; then
-    echo "[1/3] Creating .env from example..."
+    echo "[4/3] Creating .env from example..."
     cp final_version/.env.example .env
 fi
 
 # Step 2: Check API key
 current_key=$(grep "^OPENAI_API_KEY=" .env | cut -d= -f2)
 if [ "$current_key" = "sk-your-api-key-here" ] || [ -z "$current_key" ]; then
-    echo "[2/3] Enter your DeepSeek API Key (paste and press Enter):"
+    echo "[4/3] Enter your DeepSeek API Key (paste and press Enter):"
     read -r api_key
     if [ -n "$api_key" ]; then
         sed -i "s|^OPENAI_API_KEY=.*|OPENAI_API_KEY=$api_key|" .env
         echo "  API Key saved!"
     fi
 else
-    echo "[2/3] API Key already configured."
+    echo "[4/3] API Key already configured."
 fi
 
 # Step 3: Copy .env to final_version/ and start
 cp .env final_version/.env 2>/dev/null
-echo "[3/3] Starting VulnForge..."
+echo "[4/3] Starting VulnForge..."
 
 docker compose -f final_version/docker-compose.yml down --remove-orphans 2>/dev/null
 
@@ -48,3 +48,4 @@ else
 fi
 
 echo "========================================"
+
