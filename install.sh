@@ -142,16 +142,16 @@ if ! command -v npm >/dev/null 2>&1; then
     fi
 fi
 
-# Use China mirror for npm if available
-if npm config get registry 2>/dev/null | grep -q "registry.npmjs.org"; then
-    # Test if npmjs.org is reachable
-    if ! curl -sI "https://registry.npmjs.org/" --connect-timeout 3 >/dev/null 2>&1; then
-        echo "  Using npmmirror.com for npm (China mirror)"
-        npm config set registry https://registry.npmmirror.com
-    fi
+# Use npmmirror if npmjs.org is unreachable (China)
+NPM_REGISTRY=""
+if curl -sI "https://registry.npmjs.org/" --connect-timeout 3 >/dev/null 2>&1; then
+    echo "  Using default npm registry"
+else
+    echo "  Using npmmirror (China mirror)"
+    NPM_REGISTRY="--registry=https://registry.npmmirror.com"
 fi
 
-npm install --silent 2>/dev/null || npm install
+npm install --silent $NPM_REGISTRY 2>/dev/null || npm install $NPM_REGISTRY
 npm run build 2>/dev/null || npm run build
 cd "$PROJECT_DIR"
 
