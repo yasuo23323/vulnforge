@@ -120,9 +120,19 @@ fi
 # [4] Python venv + deps
 # --------------------------------------------------
 echo "[3/4] Setting up Python environment..."
-python3 -m venv venv 2>/dev/null || python3 -m virtualenv venv
+# Remove old virtualenv if it has corrupt cache
+if [ -f venv/bin/python3 ]; then
+    if ! venv/bin/python3 -c "import pip" 2>/dev/null; then
+        echo "  Old venv has corrupt cache, recreating..."
+        rm -rf venv
+    fi
+fi
+
+python3 -m venv venv 2>/dev/null || python3 -m virtualenv venv 2>/dev/null || { pip3 install virtualenv && python3 -m virtualenv venv; }
 source venv/bin/activate
-pip install --quiet --upgrade pip 2>/dev/null || true
+
+# Upgrade pip inside the fresh venv
+python3 -m pip install --quiet --upgrade pip 2>/dev/null || true
 echo "  Installing Python dependencies..."
 pip install --quiet -r backend/requirements.txt 2>/dev/null \
   || pip install --quiet -r backend/requirements.txt -i https://pypi.tuna.tsinghua.edu.cn/simple 2>/dev/null \
