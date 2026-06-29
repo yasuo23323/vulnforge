@@ -2,11 +2,6 @@
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 cd "$SCRIPT_DIR"
 
-# Use local Node.js if installed via install.sh
-if [ -f node/bin/node ]; then
-    export PATH="${SCRIPT_DIR}/node/bin:${PATH}"
-fi
-
 # Activate venv
 if [ -f venv/bin/activate ]; then
     source venv/bin/activate
@@ -17,7 +12,6 @@ echo "Starting VulnForge..."
 # Kill old processes
 pkill -f "uvicorn backend.app.main:app" 2>/dev/null || true
 pkill -f "python3 -m http.server 3000" 2>/dev/null || true
-pkill -f "vite" 2>/dev/null || true
 sleep 1
 
 # Check uvicorn
@@ -36,21 +30,15 @@ fi
 $UVICORN backend.app.main:app --host 0.0.0.0 --port 8000 &
 BACKEND_PID=$!
 
-# Start frontend
-if [ -d frontend/dist ]; then
+# Start frontend (pre-built dist)
+if [ -f frontend/dist/index.html ]; then
     cd frontend
     python3 -m http.server 3000 --directory dist &
     FRONTEND_PID=$!
     cd "$SCRIPT_DIR"
-    echo "  Frontend: http://localhost:3000 (static)"
-elif command -v npx >/dev/null 2>&1; then
-    cd frontend
-    npx vite --port 3000 --host &
-    FRONTEND_PID=$!
-    cd "$SCRIPT_DIR"
-    echo "  Frontend: http://localhost:3000 (dev mode)"
+    echo "  Frontend: http://localhost:3000"
 else
-    echo "  Frontend: not built. Run 'bash install.sh' first."
+    echo "  WARNING: frontend/dist/index.html not found. Frontend will not work."
     FRONTEND_PID=""
 fi
 

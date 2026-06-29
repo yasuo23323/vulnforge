@@ -1,10 +1,10 @@
 .env
 venv/
 node_modules/
-frontend/dist/
 __pycache__/
 *.pyc
 *.pyo
 *.db
 .vite/
 .DS_Store
+package-lock.json
