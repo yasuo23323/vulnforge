@@ -11,22 +11,42 @@ echo "Starting VulnForge..."
 
 # Kill old processes
 pkill -f "uvicorn backend.app.main:app" 2>/dev/null || true
+pkill -f "python3 -m http.server 3000" 2>/dev/null || true
+pkill -f "vite" 2>/dev/null || true
 sleep 1
 
+# Check uvicorn
+if ! command -v uvicorn >/dev/null 2>&1; then
+    if [ -f venv/bin/uvicorn ]; then
+        UVICORN="venv/bin/uvicorn"
+    else
+        echo "ERROR: uvicorn not found. Run 'bash install.sh' first."
+        exit 1
+    fi
+else
+    UVICORN="uvicorn"
+fi
+
 # Start backend
-uvicorn backend.app.main:app --host 0.0.0.0 --port 8000 &
+$UVICORN backend.app.main:app --host 0.0.0.0 --port 8000 &
 BACKEND_PID=$!
 
-# Start frontend dev server (or use dist/)
+# Start frontend
 if [ -d frontend/dist ]; then
-    python3 -m http.server 3000 --directory frontend/dist &
+    cd frontend
+    python3 -m http.server 3000 --directory dist &
     FRONTEND_PID=$!
+    cd "$SCRIPT_DIR"
     echo "  Frontend: http://localhost:3000 (static)"
-else
-    cd frontend && npx vite --port 3000 --host &
+elif command -v npx >/dev/null 2>&1; then
+    cd frontend
+    npx vite --port 3000 --host &
     FRONTEND_PID=$!
     cd "$SCRIPT_DIR"
     echo "  Frontend: http://localhost:3000 (dev mode)"
+else
+    echo "  Frontend: not built. Run 'bash install.sh' first."
+    FRONTEND_PID=""
 fi
 
 sleep 2
