@@ -2,6 +2,11 @@
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 cd "$SCRIPT_DIR"
 
+# Use local Node.js if installed via install.sh
+if [ -f node/bin/node ]; then
+    export PATH="${SCRIPT_DIR}/node/bin:${PATH}"
+fi
+
 # Activate venv
 if [ -f venv/bin/activate ]; then
     source venv/bin/activate
