@@ -16,7 +16,8 @@ echo "Starting VulnForge..."
 
 # Kill old processes
 pkill -f "uvicorn backend.app.main:app" 2>/dev/null || true
-pkill -f "python3 -m http.server 3000" 2>/dev/null || true
+pkill -f "proxy_server.py" 2>/dev/null || true
+pkill -f "python3 -m http.server" 2>/dev/null || true
 sleep 1
 
 # Check uvicorn
@@ -35,23 +36,21 @@ fi
 $UVICORN backend.app.main:app --host 0.0.0.0 --port 8000 &
 BACKEND_PID=$!
 
-# Start frontend (pre-built dist)
+# Start frontend proxy (serves static files + proxies API calls)
 if [ -f frontend/dist/index.html ]; then
-    cd frontend
-    python3 -m http.server 3000 --directory dist &
-    FRONTEND_PID=$!
-    cd "$SCRIPT_DIR"
-    echo "  Frontend: http://localhost:3000"
+    python3 proxy_server.py &
+    PROXY_PID=$!
+    echo "  Frontend: http://localhost:3000 (proxied)"
 else
     echo "  WARNING: frontend/dist/index.html not found"
-    FRONTEND_PID=""
+    PROXY_PID=""
 fi
 
-sleep 2
+sleep 3
 echo "  Backend:  http://localhost:8000"
 echo "  API docs: http://localhost:8000/docs"
 echo ""
 echo "Press Ctrl+C to stop"
 
-trap "kill $BACKEND_PID $FRONTEND_PID 2>/dev/null; exit" INT TERM
+trap "kill $BACKEND_PID $PROXY_PID 2>/dev/null; exit" INT TERM
 wait
