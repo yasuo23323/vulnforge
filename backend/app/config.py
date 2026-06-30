@@ -24,7 +24,7 @@ class Settings(BaseSettings):
     SCANNER_DALFOX_PATH: str = "dalfox"
     SCANNER_FFUF_PATH: str = "ffuf"
     SCANNER_SQLMAP_PATH: str = "sqlmap"
-    SCANNER_TOOLS_DIR: str = "/usr/local/bin"
+    SCANNER_TOOLS_DIR: str = ""
 
     DOCKER_SANDBOX_ENABLED: bool = True
     DOCKER_SANDBOX_NETWORK: str = "host"

@@ -2,6 +2,11 @@
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 cd "$SCRIPT_DIR"
 
+# Add local tools to PATH
+if [ -d tools ]; then
+    export PATH="${SCRIPT_DIR}/tools:${PATH}"
+fi
+
 # Activate venv
 if [ -f venv/bin/activate ]; then
     source venv/bin/activate
@@ -38,7 +43,7 @@ if [ -f frontend/dist/index.html ]; then
     cd "$SCRIPT_DIR"
     echo "  Frontend: http://localhost:3000"
 else
-    echo "  WARNING: frontend/dist/index.html not found. Frontend will not work."
+    echo "  WARNING: frontend/dist/index.html not found"
     FRONTEND_PID=""
 fi
 

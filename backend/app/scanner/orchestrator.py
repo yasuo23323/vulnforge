@@ -9,20 +9,29 @@ from app.config import settings
 
 class ScannerOrchestrator:
 
+    def _get_tool_path(self, name: str) -> str:
+        """Return path to scanner tool. Check local tools/ dir first, then PATH."""
+        local_path = os.path.join(settings.SCANNER_TOOLS_DIR, name)
+        if os.path.exists(local_path):
+            return local_path
+        # Also check project tools directory
+        project_tools = os.path.join(os.path.dirname(os.path.dirname(__file__)), "..", "..", "tools")
+        project_path = os.path.join(project_tools, name)
+        if os.path.exists(project_path):
+            return project_path
+        return name
+
     def _build_command(self, scanner_name: str, target_url: str) -> Optional[list[str]]:
         if scanner_name == "nuclei":
-            return ["docker", "run", "--rm", "--network", "host",
-                    "projectdiscovery/nuclei:latest",
-                    "-u", target_url, "-silent",
+            nuclei_path = self._get_tool_path("nuclei")
+            return [nuclei_path, "-u", target_url, "-silent",
                     "-severity", "medium,high,critical",
                     "-retries", "1", "-timeout", "10"]
         elif scanner_name == "dalfox":
-            return ["docker", "run", "--rm", "--network", "host",
-                    "--entrypoint", "/app/dalfox",
-                    "hahwul/dalfox",
-                    "url", "--url", target_url, "--silence", "--no-cast"]
+            dalfox_path = self._get_tool_path("dalfox")
+            return [dalfox_path, "url", "--url", target_url, "--silence", "--no-cast"]
         elif scanner_name == "ffuf":
-            wordlist_path = settings.SCANNER_TOOLS_DIR + "/common.txt"
+            wordlist_path = os.path.join(settings.SCANNER_TOOLS_DIR, "common.txt")
             local_wordlist = os.path.join(os.path.dirname(__file__), "common.txt")
             if os.path.exists(local_wordlist):
                 wordlist_path = local_wordlist
